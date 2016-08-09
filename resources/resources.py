@@ -421,27 +421,8 @@ def list_queues():
             'standard',
             'standard_16',
             't1standard',
+            't2standard',
             't1small']
-    
-    return list
-
-
-
-def list_bed_types():
-
-    '''
-    Return a list of supported bed types.
-    '''
-    
-    list = ['ctrl',
-            'cresis',
-            'cresisp',
-            'minus',
-            'plus',
-            'ba01_bed',
-            '970mW_hs',
-            'jak_1985',
-            'no_bath']
     
     return list
 
