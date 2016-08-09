@@ -359,8 +359,8 @@ def generate_climate(climate, **kwargs):
     params_dict = OrderedDict()
     if climate in ('elev'):
         params_dict['surface'] = 'elevation'
-        params_dict['ice_surface_temp'] = '0,-4,0,2500'
-        params_dict['climatic_mass_balance'] = '-5,6,500,1500,3000'
+        params_dict['ice_surface_temp'] = '10.5,-2,0,2500'
+        params_dict['climatic_mass_balance'] = '-17.25,5.5,0,1725,2500'
     else:
         print('climate {} not recognized, exiting'.format(climate))
         import sys

@@ -45,6 +45,8 @@ parser.add_argument("--o_size", dest="osize",
 parser.add_argument("-s", "--system", dest="system",
                     choices=list_systems(),
                     help="computer system to use.", default='debug')
+parser.add_argument("--bed_version", dest="bed_version",
+                    help="Version of bed DEM.", default='1')
 parser.add_argument("--stress_balance", dest="stress_balance",
                     choices=['sia', 'ssa+sia', 'ssa'],
                     help="stress balance solver", default='sia')
@@ -60,6 +62,7 @@ queue = options.queue
 walltime = options.walltime
 system = options.system
 
+bed_version = options.bed_version
 climate = options.climate
 duration = options.duration
 grid = options.grid
@@ -68,7 +71,7 @@ stress_balance = options.stress_balance
 domain = options.domain
 pism_exec = generate_domain(domain)
 
-pism_dataname = 'pism_Olympics_{}m.nc'.format(grid)
+pism_dataname = 'pism_Olympics_{grid}m_v{version}.nc'.format(grid=grid, version=bed_version)
 if not os.path.isdir(odir):
     os.mkdir(odir)
 
@@ -91,7 +94,7 @@ plastic_phi_values = [20, 30]
 combinations = list(itertools.product(sia_e_values, ppq_values, tefo_values, plastic_phi_values))
 
 tsstep = 'daily'
-exstep = '10'
+exstep = 'yearly'
 
 scripts = []
 
