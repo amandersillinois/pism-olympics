@@ -75,6 +75,14 @@ pism_dataname = 'pism_Olympics_{grid}m_v{version}.nc'.format(grid=grid, version=
 if not os.path.isdir(odir):
     os.mkdir(odir)
 
+pism_config = 'olympics_config'
+pism_config_nc = '.'.join([pism_config, 'nc'])
+pism_config_cdl = os.path.join('../config', '.'.join([pism_config, 'cdl']))
+if not os.path.isfile(pism_config_nc):
+    cmd = ['ncgen', '-o',
+           pism_config_nc, pism_config_cdl]
+    sub.call(cmd)
+
 start = 0
 end = duration
 
@@ -141,6 +149,8 @@ for n, combination in enumerate(combinations):
         general_params_dict['o'] = os.path.join(odir, outfile)
         general_params_dict['o_format'] = oformat
         general_params_dict['o_size'] = osize
+        general_params_dict['config_override'] = pism_config_nc
+
         
         grid_params_dict = generate_grid_description(grid, accepted_resolutions(), domain)
 
@@ -165,7 +175,7 @@ for n, combination in enumerate(combinations):
         all_params_dict = merge_dicts(general_params_dict, grid_params_dict, stress_balance_params_dict, climate_params_dict, ocean_params_dict, hydro_params_dict, spatial_ts_dict, scalar_ts_dict)
         all_params = ' '.join([' '.join(['-' + k, str(v)]) for k, v in all_params_dict.items()])
         
-        cmd = ' '.join([batch_system['mpido'], prefix, all_params, '> job.${batch}  2>&1'.format(batch=batch_system['job_id'])])
+        cmd = ' '.join([batch_system['mpido'], prefix, all_params, '> {outdir}/job.${batch}  2>&1'.format(outdir=odir,batch=batch_system['job_id'])])
 
         f.write(cmd)
         f.write('\n')
