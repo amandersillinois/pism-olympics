@@ -1,0 +1,27 @@
+working on guestimates for the simplest climate for the Olympics simulations
+
+Neet a temperature lapse rate.  This is based on the approximate elevaiton range of the Olympics and the mean annual temperature of Aberdeen, WA (10.5 C) and a lapse rate of ~5 deg C/km from Minder 2010 for the Cascades.  This is less than the wet adiabat (6.5 C/km).    
+
+hmin = 0 m
+hmax = 2500 m
+Tmax = 10.5 C
+Tmin = -2 C
+
+
+
+
+Need a mass balance gradient
+Take LaChapelle 1965 long term gradients from Blue glacier
+hELA = 1725 m
+hmax = 2500 m
+hmin = 0m
+mmin = -17.25 m/yr
+mmax = 5.425 m/yr
+
+based on this relationship
+
+b_bar = 0.007(z-1725) for Z greaterthanequalto 1725
+b_bar = -0.010(1725-z) for Z less than 1725
+
+
+
