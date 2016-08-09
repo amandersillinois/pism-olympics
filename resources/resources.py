@@ -12,6 +12,11 @@ from collections import OrderedDict
 import os
 
 
+def accepted_resolutions():
+
+    return (50, 100, 200, 500, 1000, 2000, 5000)
+
+
 def generate_prefix_str(pism_exec):
     '''
     Generate prefix string.
@@ -34,14 +39,8 @@ def generate_domain(domain):
     Returns: string
     '''
     
-    if domain.lower() in ('greenland', 'gris', 'gris_ext'):
-        pism_exec = 'pismr'
-    elif domain.lower() in ('jakobshavn'):
-        x_min = -280000
-        x_max = 320000
-        y_min = -2410000
-        y_max = -2020000
-        pism_exec = '''pismo -x_range {x_min},{x_max} -y_range {y_min},{y_max} -bootstrap'''.format(x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max)
+    if domain.lower() in ('olympics'):
+        pism_exec = 'pismr -bed_smoother_range 50'
     else:
         print('Domain {} not recognized, exiting'.format(domain))
         import sys
@@ -93,95 +92,6 @@ def default_spatial_ts_vars():
     
     return exvars
 
-def ismip6_spatial_ts_vars():
-    '''
-    Returns a list of commonly-used extra vars
-    '''
-    
-    exvars = ['basal_mass_balance_average',
-              'beta',
-              'bmelt',
-              'cell_area',
-              'dbdt',
-              'dHdt',
-              'diffusivity',
-              'discharge_flux',
-              'flux_divergence',
-              'height_above_flotation',
-              'hfgeoubed',
-              'mask',
-              'lat',
-              'lat_bnds',
-              'lon',
-              'lon_bnds',
-              'nuH',
-              'relative_flotation',
-              'sftgrf',
-              'sftflf',
-              'sftgif',
-              'surface_mass_balance_average',
-              'taub_mag',
-              'tauc',
-              'taud_mag',
-              'tempicethk_basal',
-              'tempbase',
-              'temppabase',
-              'tempsurf',
-              'thk',
-              'topg',
-              'usurf',
-              'velbar',
-              'velbase',
-              'velbase_mag',
-              'velsurf',
-              'velsurf_mag',
-              'wvelbase',
-              'wvelsurf']
-    
-    return exvars
-
-def init_spatial_ts_vars():
-    '''
-    Returns a list of commonly-used extra vars for initialization
-    '''
-    
-    exvars = ['basal_mass_balance_average',
-              'beta',
-              'bmelt',
-              'bwat',
-              'bwatvel',
-              'bwp',
-              'cell_area',
-              'dbdt',
-              'dHdt',
-              'diffusivity',
-              'discharge_flux',
-              'height_above_flotation',
-              'mask',
-              'lat',
-              'lat_bnds',
-              'lon',
-              'lon_bnds',
-              'nuH',
-              'strain_rates',
-              'surface_mass_balance_average',
-              'taub_mag',
-              'tauc',
-              'taud_mag',
-              'tempicethk_basal',
-              'temppabase',
-              'tempsurf',
-              'thk',
-              'topg',
-              'usurf',
-              'velbase',
-              'velbase_mag',
-              'velsurf',
-              'velsurf_mag',
-              'vonmises_calving_rate',
-              'vonmises_stress']
-    
-    return exvars
 
 
 def generate_spatial_ts(outfile, exvars, step, start=None, end=None, split=None, odir=None):
@@ -266,24 +176,20 @@ def generate_snap_shots(outfile, times, odir=None):
     return params_dict
 
 
-def generate_grid_description(grid_resolution, domain):
+def generate_grid_description(grid_resolution, accepted_resolutions, domain):
     '''
     Generate grid description dict
 
     Returns: OrderedDict
     '''
 
-    if domain.lower() in ('greenland_ext', 'gris_ext'):
-        mx_max = 15120
-        my_max = 19680
-    else:
-        mx_max = 10560
-        my_max = 18240
+    if domain.lower() in ('olympics'):
+        mx_max = 4000
+        my_max = 3600
 
 
-    resolution_max = 150
+    resolution_max = 50
     
-    accepted_resolutions = (150, 300, 450, 600, 900, 1200, 1500, 1800, 2400, 3000, 3600, 4500, 6000, 9000, 18000, 36000)
 
     try:
         grid_resolution in accepted_resolutions
@@ -300,16 +206,12 @@ def generate_grid_description(grid_resolution, domain):
     horizontal_grid['Mx'] = mx
     horizontal_grid['My'] = my
 
-    if grid_resolution < 1200:
+    if grid_resolution < 200:
         skip_max = 200
         mz = 401
         mzb = 41
-    elif (grid_resolution >= 1200) and (grid_resolution < 4500):
+    elif (grid_resolution >= 200) and (grid_resolution <= 500):
         skip_max = 50
-        mz = 201
-        mzb = 21
-    elif (grid_resolution >= 4500) and (grid_resolution < 18000):
-        skip_max = 20
         mz = 201
         mzb = 21
     else:
@@ -455,29 +357,10 @@ def generate_climate(climate, **kwargs):
     '''
     
     params_dict = OrderedDict()
-    if climate in ('paleo'):
-        params_dict['atmosphere'] = 'searise_greenland,delta_T,paleo_precip'
-        if 'atmosphere_paleo_precip_file' not in kwargs:
-            params_dict['atmosphere_paleo_precip_file'] = 'pism_dT.nc'
-        if 'atmosphere_delta_T_file' not in kwargs:
-            params_dict['atmosphere_delta_T_file'] = 'pism_dT.nc'
-        params_dict['surface'] = 'pdd'
-    elif climate in ('pdd'):
-        params_dict['atmosphere'] = 'given'
-        if 'atmosphere_given_file' not in kwargs:
-            params_dict['atmosphere_given_file'] = 'foo.nc'
-        params_dict['surface'] = 'pdd'
-    elif climate in ('pdd_lapse'):
-        params_dict['atmosphere'] = 'given,lapse_rate'
-        if 'atmosphere_given_file' not in kwargs:
-            params_dict['atmosphere_given_file'] = 'foo.nc'
-        if 'temp_lapse_rate' not in kwargs:
-            params_dict['temp_lapse_rate'] = 0.0
-        params_dict['surface'] = 'pdd'
-    elif climate in ('const', 'relax', 'given'):
-        params_dict['surface'] = 'given'
-    elif climate in ('flux'):
-        params_dict['surface'] = 'given,forcing'
+    if climate in ('elev'):
+        params_dict['surface'] = 'elevation'
+        params_dict['ice_surface_temp'] = '0,-4,0,2500'
+        params_dict['climatic_mass_balance'] = '-5,6,500,1500,3000'
     else:
         print('climate {} not recognized, exiting'.format(climate))
         import sys
@@ -494,18 +377,8 @@ def generate_ocean(ocean, **kwargs):
     '''
 
     params_dict = OrderedDict()
-    if ocean in ('paleo'):
-        params_dict['ocean'] = 'given,delta_SL,frac_SMB'
-        if 'ocean_delta_SL_file' not in kwargs:
-            params_dict['ocean_delta_SL_file'] = 'pism_dSL.nc'
-    elif ocean in ('paleo_const'):
-        params_dict['ocean'] = 'given,delta_SL'        
-        if 'ocean_delta_SL_file' not in kwargs:
-            params_dict['ocean_delta_SL_file'] = 'pism_dSL.nc'
-    elif ocean in ('given', 'relax'):
-        params_dict['ocean'] = 'given'
-    elif ocean in ('given_mbp'):
-        params_dict['ocean'] = 'given,delta_MBP'
+    if ocean in ('null'):
+        pass
     elif ocean in ('const'):
         params_dict['ocean'] = 'constant'
     else:
