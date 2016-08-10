@@ -27,7 +27,7 @@ parser.add_argument("--climate", dest="climate",
                     choices=['elev'],
                     help="Climate", default='elev')
 parser.add_argument("-d", "--domain", dest="domain",
-                    choices=['olympics'],
+                    choices=['olympics', 'olympics_mtns'],
                     help="sets the modeling domain", default='olympics')
 parser.add_argument("--duration", dest="duration",
                     help="Duration of run", default=10)
@@ -38,7 +38,7 @@ parser.add_argument("-g", "--grid", dest="grid", type=int,
                     choices=accepted_resolutions(),
                     help="horizontal grid resolution", default=1000)
 parser.add_argument("--o_dir", dest="odir",
-                    help="output directory. Default: current directory", default='.')
+                    help="output directory. Default: current directory", default='test')
 parser.add_argument("--o_size", dest="osize",
                     choices=['small', 'medium', 'big', '2dbig'],
                     help="output size type", default='medium')
@@ -71,10 +71,13 @@ stress_balance = options.stress_balance
 domain = options.domain
 pism_exec = generate_domain(domain)
 
-pism_dataname = 'pism_Olympics_{grid}m_v{version}.nc'.format(grid=grid, version=bed_version)
+pism_dataname = 'pism_{domain}_{grid}m_v{version}.nc'.format(domain=domain.capitalize(),
+                                                             grid=grid,
+                                                             version=bed_version)
 if not os.path.isdir(odir):
     os.mkdir(odir)
 
+# Configuration File Setup
 pism_config = 'olympics_config'
 pism_config_nc = '.'.join([pism_config, 'nc'])
 pism_config_cdl = os.path.join('../config', '.'.join([pism_config, 'cdl']))
@@ -97,9 +100,12 @@ hydrology = 'diffuse'
 # set up model initialization
 # ########################################################
 
+
+# Model Parameters
 ssa_n = (3.0)
 ssa_e = (1.0)
 
+# Model Parameters for Sensitivity Studay
 sia_e_values = [1.0, 3.0]
 ppq_values = [0.50]
 tefo_values = [0.020]
@@ -107,15 +113,13 @@ plastic_phi_values = [20, 30]
 combinations = list(itertools.product(sia_e_values, ppq_values, tefo_values, plastic_phi_values))
 
 tsstep = 'daily'
-exstep = 'yearly'
+exstep = '1'
 
 scripts = []
-
 
 for n, combination in enumerate(combinations):
 
     sia_e, ppq, tefo, plastic_phi = combination
-
 
     name_options = OrderedDict()
     name_options['sia_e'] = sia_e
@@ -146,6 +150,7 @@ for n, combination in enumerate(combinations):
 
         prefix = generate_prefix_str(pism_exec)
 
+        # Setup General Parameters
         general_params_dict = OrderedDict()
         general_params_dict['i'] = pism_dataname
         general_params_dict['bootstrap'] = ''
@@ -159,6 +164,7 @@ for n, combination in enumerate(combinations):
         
         grid_params_dict = generate_grid_description(grid, accepted_resolutions(), domain)
 
+        # Setup Stress Balance Paramters
         sb_params_dict = OrderedDict()
         sb_params_dict['sia_e'] = sia_e
         sb_params_dict['ssa_e'] = ssa_e
@@ -169,14 +175,20 @@ for n, combination in enumerate(combinations):
         sb_params_dict['bed_smoother_range'] = 0.
 
         stress_balance_params_dict = generate_stress_balance(stress_balance, sb_params_dict)
+
+        # Setup Climate Forcing
         climate_params_dict = generate_climate(climate)
+        # Setup Ocean Forcing
         ocean_params_dict = generate_ocean('null')
+        # Setup Hydrology Model
         hydro_params_dict = generate_hydrology(hydrology)
 
+        # Setup Scalar and Spatial Time Series Reporting
         exvars = default_spatial_ts_vars()
         spatial_ts_dict = generate_spatial_ts(outfile, exvars, exstep, odir=odir)
         scalar_ts_dict = generate_scalar_ts(outfile, tsstep, odir=odir)
 
+        # Merge All Parameter Dictionaries
         all_params_dict = merge_dicts(general_params_dict, grid_params_dict, stress_balance_params_dict, climate_params_dict, ocean_params_dict, hydro_params_dict, spatial_ts_dict, scalar_ts_dict)
         all_params = ' '.join([' '.join(['-' + k, str(v)]) for k, v in all_params_dict.items()])
         

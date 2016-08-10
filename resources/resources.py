@@ -39,8 +39,8 @@ def generate_domain(domain):
     Returns: string
     '''
     
-    if domain.lower() in ('olympics'):
-        pism_exec = 'pismr -bed_smoother_range 50'
+    if domain.lower() in ('olympics', 'olympics_mtns'):
+        pism_exec = 'pismr -bed_smoother_range 250'
     else:
         print('Domain {} not recognized, exiting'.format(domain))
         import sys
@@ -62,14 +62,12 @@ def default_spatial_ts_vars():
               'diffusivity',
               'discharge_flux',
               'flux_divergence',
-              'height_above_flotation',
               'ice_mass',
               'mask',
               'lat',
               'lat_bnds',
               'lon',
               'lon_bnds',
-              'strain_rates',
               'surface_mass_balance_average',
               'taub_mag',
               'tauc',
@@ -85,8 +83,6 @@ def default_spatial_ts_vars():
               'velbase_mag',
               'velsurf',
               'velsurf_mag',
-              'vonmises_calving_rate',
-              'vonmises_stress',
               'wvelbase',
               'wvelsurf']
     
@@ -186,8 +182,11 @@ def generate_grid_description(grid_resolution, accepted_resolutions, domain):
     if domain.lower() in ('olympics'):
         mx_max = 4000
         my_max = 3600
-
-
+    elif domain.lower() in ('olympics_mtns'):
+        mx_max = 2400
+        my_max = 2000
+    else:
+        print('domain {} not recongnized'.format(domain))
     resolution_max = 50
     
 
@@ -359,8 +358,10 @@ def generate_climate(climate, **kwargs):
     params_dict = OrderedDict()
     if climate in ('elev'):
         params_dict['surface'] = 'elevation'
-        params_dict['ice_surface_temp'] = '10.5,-2,0,2500'
-        params_dict['climatic_mass_balance'] = '-17.25,5.5,0,1725,2500'
+        # params_dict['ice_surface_temp'] = '10.5,-2,0,2500'
+        # params_dict['climatic_mass_balance'] = '-17.25,5.5,0,1725,2500'
+        params_dict['ice_surface_temp'] = '2,-15,0,2000'
+        params_dict['climatic_mass_balance'] = '-4.,5.5,0,800,2500'
     else:
         print('climate {} not recognized, exiting'.format(climate))
         import sys
