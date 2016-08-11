@@ -54,20 +54,19 @@ def default_spatial_ts_vars():
     Returns a list of commonly-used extra vars
     '''
     
-    exvars = ['basal_mass_balance_average',
+    exvars = ['air_temp',
               'beta',
               'bmelt',
               'cell_area',
               'dHdt',
               'diffusivity',
-              'discharge_flux',
-              'flux_divergence',
               'ice_mass',
               'mask',
               'lat',
               'lat_bnds',
               'lon',
               'lon_bnds',
+              'precipitation',
               'surface_mass_balance_average',
               'taub_mag',
               'tauc',
@@ -361,7 +360,39 @@ def generate_climate(climate, **kwargs):
         # params_dict['ice_surface_temp'] = '10.5,-2,0,2500'
         # params_dict['climatic_mass_balance'] = '-17.25,5.5,0,1725,2500'
         params_dict['ice_surface_temp'] = '2,-15,0,2000'
-        params_dict['climatic_mass_balance'] = '-4.,5.5,0,800,2500'
+        params_dict['climatic_mass_balance'] = '-3.,3,0,800,2500'
+    elif climate in ('present'):
+        params_dict['atmosphere'] = 'given,lapse_rate'
+        if 'atmosphere_given_file' not in kwargs:
+            params_dict['atmosphere_given_file'] = 'olympics_climate_1000m.nc'
+        else:
+            params_dict['atmosphere_given_file'] = kwargs['atmosphere_given_file']
+        params_dict['temp_lapse_rate'] = 6.5
+        if 'atmosphere_lapse_rate_file' not in kwargs:
+            params_dict['atmosphere_lapse_rate_file'] = 'olympics_climate_1000m.nc'
+        else:
+            params_dict['atmosphere_lapse_rate_file'] = kwargs['atmosphere_lapse_rate_file']
+        params_dict['surface'] = 'pdd'
+    elif climate in ('paleo'):
+        params_dict['atmosphere'] = 'given,lapse_rate,delta_T,frac_P'
+        if 'atmosphere_given_file' not in kwargs:
+            params_dict['atmosphere_given_file'] = 'olympics_climate_1000m.nc'
+        else:
+            params_dict['atmosphere_given_file'] = kwargs['atmosphere_given_file']
+        params_dict['temp_lapse_rate'] = 6.5
+        if 'atmosphere_lapse_rate_file' not in kwargs:
+            params_dict['atmosphere_lapse_rate_file'] = 'olympics_climate_1000m.nc'
+        else:
+            params_dict['atmosphere_lapse_rate_file'] = kwargs['atmosphere_lapse_rate_file']
+        if 'atmosphere_delta_T_file' not in kwargs:
+            params_dict['atmosphere_delta_T_file'] = 'paleo_modifier.nc'
+        else:
+            params_dict['atmosphere_delta_T_file'] = kwargs['atmosphere_delta_T_file']
+        if 'atmosphere_frac_P_file' not in kwargs:
+            params_dict['atmosphere_frac_P_file'] = 'paleo_modifier.nc'
+        else:
+            params_dict['atmosphere_delta_T_file'] = kwargs['atmosphere_frac_P_file']
+        params_dict['surface'] = 'pdd'
     else:
         print('climate {} not recognized, exiting'.format(climate))
         import sys

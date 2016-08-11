@@ -24,8 +24,8 @@ parser.add_argument("-w", '--wall_time', dest="walltime",
 parser.add_argument("-q", '--queue', dest="queue", choices=list_queues(),
                     help='''queue. default=t1standard.''', default='normal')
 parser.add_argument("--climate", dest="climate",
-                    choices=['elev'],
-                    help="Climate", default='elev')
+                    choices=['elev', 'paleo', 'present'],
+                    help="Climate", default='paleo')
 parser.add_argument("-d", "--domain", dest="domain",
                     choices=['olympics', 'olympics_mtns'],
                     help="sets the modeling domain", default='olympics')
@@ -142,7 +142,7 @@ for n, combination in enumerate(combinations):
 
         f.write(batch_header)
 
-        outfile = '{domain}_g{grid}m_{experiment}_{start}_{end}.nc'.format(domain=domain.lower(),
+        outfile = '{domain}_g{grid}m_{experiment}_{start}_{end}a.nc'.format(domain=domain.lower(),
                                                                            grid=grid,
                                                                            experiment=experiment,
                                                                            start=start,
