@@ -112,8 +112,8 @@ tefo_values = [0.020]
 plastic_phi_values = [20, 30]
 combinations = list(itertools.product(sia_e_values, ppq_values, tefo_values, plastic_phi_values))
 
-tsstep = 'daily'
-exstep = '1'
+tsstep = 'yearly'
+exstep = '10'
 
 scripts = []
 
@@ -172,7 +172,7 @@ for n, combination in enumerate(combinations):
         sb_params_dict['pseudo_plastic_q'] = ppq
         sb_params_dict['till_effective_fraction_overburden'] = tefo
         sb_params_dict['plastic_phi'] = plastic_phi
-        sb_params_dict['bed_smoother_range'] = 0.
+        sb_params_dict['bed_smoother_range'] = 250.
 
         stress_balance_params_dict = generate_stress_balance(stress_balance, sb_params_dict)
 

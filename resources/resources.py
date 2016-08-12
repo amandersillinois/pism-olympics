@@ -14,7 +14,7 @@ import os
 
 def accepted_resolutions():
 
-    return (50, 100, 200, 500, 1000, 2000, 5000)
+    return (50, 100, 200, 250, 500, 1000, 2000, 5000)
 
 
 def generate_prefix_str(pism_exec):
@@ -40,7 +40,7 @@ def generate_domain(domain):
     '''
     
     if domain.lower() in ('olympics', 'olympics_mtns'):
-        pism_exec = 'pismr -bed_smoother_range 250'
+        pism_exec = 'pismr'
     else:
         print('Domain {} not recognized, exiting'.format(domain))
         import sys
@@ -284,12 +284,9 @@ def generate_stress_balance(stress_balance, additional_params_dict):
     params_dict['stress_balance'] = stress_balance
     if stress_balance in ('ssa+sia'):
         params_dict['options_left'] = ''
-        params_dict['ssafd_pc_type'] = 'asm'
-        params_dict['ssafd_sub_pc_type'] = 'jacobi'
+        # params_dict['ssafd_pc_type'] = 'asm'
+        # params_dict['ssafd_sub_pc_type'] = 'jacobi'
         params_dict['cfbc'] = ''
-        params_dict['kill_icebergs'] = ''
-        params_dict['part_grid'] = ''
-        params_dict['part_redist'] = ''
         params_dict['sia_flow_law'] = 'gpbld3'
         params_dict['pseudo_plastic'] = ''
         params_dict['tauc_slippery_grounding_lines'] = ''
