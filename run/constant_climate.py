@@ -31,6 +31,8 @@ parser.add_argument("-d", "--domain", dest="domain",
                     help="sets the modeling domain", default='olympics')
 parser.add_argument("--duration", dest="duration",
                     help="Duration of run", default=10)
+parser.add_argument("--exstep", dest="exstep",
+                    help="Spatial time series writing interval", default=1)
 parser.add_argument("-f", "--o_format", dest="oformat",
                     choices=['netcdf3', 'netcdf4_parallel', 'pnetcdf'],
                     help="output format", default='netcdf3')
@@ -68,6 +70,7 @@ duration = options.duration
 grid = options.grid
 stress_balance = options.stress_balance
 
+exstep = options.exstep
 domain = options.domain
 pism_exec = generate_domain(domain)
 
@@ -113,7 +116,6 @@ plastic_phi_values = [20, 30]
 combinations = list(itertools.product(sia_e_values, ppq_values, tefo_values, plastic_phi_values))
 
 tsstep = 'yearly'
-exstep = '10'
 
 scripts = []
 
@@ -177,7 +179,8 @@ for n, combination in enumerate(combinations):
         stress_balance_params_dict = generate_stress_balance(stress_balance, sb_params_dict)
 
         # Setup Climate Forcing
-        climate_params_dict = generate_climate(climate)
+        climate_file = 'ltop_climate_olympics_{grid}m_mm_hr-1.nc'.format(grid=grid)
+        climate_params_dict = generate_climate(climate, atmosphere_given_file=climate_file, atmosphere_lapse_rate_file=climate_file)
         # Setup Ocean Forcing
         ocean_params_dict = generate_ocean('null')
         # Setup Hydrology Model
