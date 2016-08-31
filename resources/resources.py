@@ -4,7 +4,7 @@ resources
 
 Provides:
   - general resources such as grid constructors, calving, hydrology, etc.
-    for the Greenland Ice Sheet (and sub-regions thereof
+    for the Olympic Peninsula
 
 """
 
@@ -228,7 +228,7 @@ def generate_grid_description(grid_resolution, accepted_resolutions, domain):
     grid_options['skip'] = ''
     grid_options['skip_max'] = skip_max
 
-    grid_dict = merge_dicts( horizontal_grid, vertical_grid)
+    grid_dict = merge_dicts(horizontal_grid, vertical_grid, grid_options)
 
     return grid_dict
 
