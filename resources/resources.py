@@ -354,8 +354,6 @@ def generate_climate(climate, **kwargs):
     params_dict = OrderedDict()
     if climate in ('elev'):
         params_dict['surface'] = 'elevation'
-        # params_dict['ice_surface_temp'] = '10.5,-2,0,2500'
-        # params_dict['climatic_mass_balance'] = '-17.25,5.5,0,1725,2500'
         params_dict['ice_surface_temp'] = '2,-15,0,2000'
         params_dict['climatic_mass_balance'] = '-3.,3,0,800,2500'
     elif climate in ('present'):
@@ -395,7 +393,7 @@ def generate_climate(climate, **kwargs):
         import sys
         sys.exit(0)
         
-    return merge_dicts(params_dict, kwargs)
+    return params_dict
 
         
 def generate_ocean(ocean, **kwargs):
