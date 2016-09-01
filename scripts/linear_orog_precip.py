@@ -1,4 +1,3 @@
-import time
 import logging
 import logging.handlers
 from scipy.fftpack import fft2, fftfreq
@@ -52,73 +51,72 @@ class OrographicPrecipitation(object):
         else:
             self.P_units = 'mm hr-1'
 
-    def _regularize(self, x):
-        eps = 1e-18
-        if np.fabs(x) < 1e-18:
-            if np.fabs(x) >= 0:
-                return eps
-            else:
-                return -eps
-        else:
-            return x
-
     def _compute_precip(self, ounits):
 
         physical_constants = self.physical_constants
         pad = int(np.ceil(((self.nx + self.ny) / 2) / 100)) * 100
         logger.debug('Orography.shape {}'.format(self.Orography.shape))    
         Orography = np.pad(self.Orography, pad, 'constant')
-        nxp, nyp = Orography.shape
-        dx = self.dx
-        dy = self.dy
         logger.debug('Padded Orography.shape {}'.format(Orography.shape))    
         logger.info('Fourier transform orography')
+        Orography_fft = np.fft.fft2(Orography)
+        dx = self.dx
+        dy = self.dy
+        nx, ny = Orography.shape
+        x_n_value = np.fft.fftfreq(len(Orography[1, :]), (1.0 / len(Orography[1, :])))
+        y_n_value = np.fft.fftfreq(len(Orography), (1.0 / len(Orography)))
 
-        # pre-compute kx
-        dkx = 2.0 * np.pi / (nxp * dx)
-        kx = np.zeros(nxp)
-        nchx = (nxp / 2) + 1
-        for i in xrange(0, nchx):
-            kx[i] = i * dkx
-        for i in xrange(nchx, nxp):
-            kx[i] = - (nxp - i) * dkx
+        x_len = len(Orography) * dx
+        y_len = len(Orography[1, :]) * dy
+        kx_line = np.divide(np.multiply(2.0 * np.pi, x_n_value), x_len)
+        ky_line = np.divide(np.multiply(2.0 * np.pi, y_n_value), y_len)[np.newaxis].T
 
-        # pre-compute ky
-        dky = 2.0 * np.pi / (nyp * dy)
-        ky = np.zeros(nyp)
-        nchy = (nyp / 2) + 1
-        for i in xrange(0, nchy):
-            ky[i] = i * dky
-        for i in xrange(nchy, nyp):
-            ky[i] = - (nyp - i) * dky
+        logger.info('Calculate wave numbers')
+        kx = np.tile(kx_line, (nx, 1))
+        ky = np.tile(ky_line, (1, ny))
+        logger.debug('kx.shape {}, ky.shape {}'.format(kx.shape, ky.shape))
 
-        h_hat = fft2(Orography)
-        P_hat = np.zeros_like(h_hat)
+        # Intrinsic frequency sigma = U*k + V*l
+        logger.info('Calculate intrinsic frequency sigma')
+        u0 = physical_constants['u']
+        v0 = physical_constants['v']
+        sigma = np.add(np.multiply(kx, u0), np.multiply(ky, v0))
+        eps = 1e-18
+        sigma_sqr_reg = sigma ** 2
+        sigma_sqr_reg[np.logical_and(np.fabs(sigma_sqr_reg) < eps, np.fabs(sigma_sqr_reg >= 0))] = eps
+        sigma_sqr_reg[np.logical_and(np.fabs(sigma_sqr_reg) < eps, np.fabs(sigma_sqr_reg < 0))] = -eps
+        
+        # The vertical wave number
+        # Eqn. 12
+        m_denom = np.power(sigma, 2.) - physical_constants['f']**2
+        # Regularization
+        m_reg = 1e-18
+        m_denom[np.logical_and(np.fabs(m_denom) < m_reg, np.fabs(m_denom) >= 0)] = m_reg
+        m_denom[np.logical_and(np.fabs(m_denom) < m_reg, np.fabs(m_denom) < 0)] = -m_reg
 
-        for j in xrange(nyp):
-            for i in xrange(nxp):
+        m1 = np.divide(np.subtract(physical_constants['Nm']**2, np.power(sigma, 2.)), m_denom)
+        m2 = np.add(np.power(kx, 2.), np.power(ky, 2.))
+        m_sqr = np.multiply(m1, m2)
+        m = np.sqrt(-1 * m_sqr)
+        # Regularization
+        m[np.logical_and(m_sqr >= 0, sigma == 0)] = np.sqrt(m_sqr[np.logical_and(m_sqr >= 0, sigma == 0)])
+        m[np.logical_and(m_sqr >= 0, sigma != 0)] = np.sqrt(m_sqr[np.logical_and(m_sqr >= 0, sigma != 0)]) * np.sign(sigma[np.logical_and(m_sqr >= 0, sigma != 0)])
+        # Numerator in Eqn. 49
+        P_karot_num = np.multiply(np.multiply(np.multiply(physical_constants['Cw'], cmath.sqrt(-1)), sigma), Orography_fft)
+        P_karot_denom_Hw = np.subtract(1, np.multiply(np.multiply(physical_constants['Hw'], m), cmath.sqrt(-1)))
+        P_karot_denom_tauc = np.add(1, np.multiply(np.multiply(sigma, physical_constants['tau_c']), cmath.sqrt(-1)))
+        P_karot_denom_tauf = np.add(1, np.multiply(np.multiply(sigma, physical_constants['tau_f']), cmath.sqrt(-1)))
+        # Denominator in Eqn. 49
+        P_karot_denom = np.multiply(P_karot_denom_Hw, np.multiply(P_karot_denom_tauc, P_karot_denom_tauf))
+        # P_karot_denom = 1
+        P_karot = np.divide(P_karot_num, P_karot_denom)
 
-                sigma = physical_constants['u'] * kx[i] + physical_constants['v'] * ky[j]
+        P_karot_amp = np.absolute(P_karot)  # get the amplitude
+        P_karot_angle = np.angle(P_karot)   # get the phase angle
 
-                C = self._regularize(sigma**2.0)
-
-                m_squared = ((Nm**2 - sigma**2) / C) * (kx[i]**2 + ky[j]**2)
-
-                if m_squared >= 0.0:
-                    if sigma == 0.0:
-                        m = np.sqrt(m_squared)
-                    else:
-                        m = np.sign(sigma) * np.sqrt(m_squared)
-                else:
-                    m = np.sqrt(-1 * m_squared)
-
-                assert np.abs(1 - 1j * m * Hw) > 1e-10
-
-                # see equation 49
-                D = (1.0 - 1j * m * physical_constants['Hw']) * (1.0 + 1j * sigma * physical_constants['tau_c']) * (1.0 + 1j * sigma * physical_constants['tau_f'])
-                P_hat[j, i] = physical_constants['Cw'] * 1j * sigma * h_hat[j, i] / D
-
-
+        # Converting from wave domain back to space domain
+        y3 = np.fft.ifft2(P_karot)
+        spy = 31556925.9747
         P = np.multiply(np.real(y3), 3600)   # mm hr-1
         P = P[pad:-pad, pad:-pad]
         # Add background precip
@@ -129,7 +127,17 @@ class OrographicPrecipitation(object):
             P[P < 0] = 0
         P_scale = physical_constants['P_scale']
         P *= P_scale 
-
+        if logger.level >= logging.DEBUG:
+            self.Orography_fft = Orography_fft
+            self.sigma = sigma
+            self.m_denom = m_denom
+            self.m_sqr = m_sqr
+            self.m = m
+            self.P_karot = P_karot
+            self.P_karot_denom = P_karot_denom
+            self.P_karot_denom = P_karot_denom_Hw
+            self.P_karot_denom_tauc = P_karot_denom_tauc
+            self.P_karot_denom_tauf = P_karot_denom_tauf
 
         if ounits is not None:
             import cf_units
@@ -293,19 +301,17 @@ if __name__ == "__main__":
     physical_constants['Cw'] = rho_Sref * Theta_m / gamma # uplift sensitivity factor [kg m-3]
     physical_constants['Hw'] = Hw         # vapor scale height
     physical_constants['u'] = -np.sin(direction*2*np.pi/360) * magnitude    # x-component of wind vector [m s-1]
-    physical_constants['v'] = -np.cos(direction*2*np.pi/360) * magnitude   # y-component of wind vector [m s-1]
+    physical_constants['v'] = np.cos(direction*2*np.pi/360) * magnitude   # y-component of wind vector [m s-1]
     # physical_constants['u'] = -15    # x-component of wind vector [m s-1]
     # physical_constants['v'] = 0   # y-component of wind vector [m s-1]
     physical_constants['P0'] = P0   # background precip [mm hr-1]
     physical_constants['P_scale'] = P_scale   # precip scale factor [1]
     logger.debug('Physical constants: {}'.format(physical_constants))
     
-    t0 = time.time()
     OP = OrographicPrecipitation(X, Y, Orography, physical_constants, truncate=truncate)
     P = OP.P
     units = OP.P_units
-    t1 = time.time()
-    print (t1-t0)
+
     if in_file is not None:
         array2raster(out_file, gd.geoTrans, gd.proj4, units, P)
     else:
