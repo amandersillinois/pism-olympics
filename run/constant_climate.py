@@ -29,10 +29,10 @@ parser.add_argument("--climate", dest="climate",
 parser.add_argument("-d", "--domain", dest="domain",
                     choices=['olympics', 'olympics_mtns'],
                     help="sets the modeling domain", default='olympics')
-parser.add_argument("--start_year", dest="start",
+parser.add_argument("--start_year", dest="start", type=float,
                     help="Start year", default=0)
-parser.add_argument("--duration", dest="duration",
-                    help="Duration of run", default=10)
+parser.add_argument("--duration", dest="duration", type=float,
+                    help="Duration", default=10)
 parser.add_argument("--exstep", dest="exstep",
                     help="Spatial time series writing interval", default=1)
 parser.add_argument("-f", "--o_format", dest="oformat",
@@ -151,8 +151,8 @@ for n, combination in enumerate(combinations):
         outfile = '{domain}_g{grid}m_{experiment}_{start}_{end}a.nc'.format(domain=domain.lower(),
                                                                            grid=grid,
                                                                            experiment=experiment,
-                                                                           start=start,
-                                                                           end=end)
+                                                                           start=int(start),
+                                                                            end=int(end))
 
         prefix = generate_prefix_str(pism_exec)
 
