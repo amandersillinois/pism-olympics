@@ -38,6 +38,9 @@ parser.add_argument("--exstep", dest="exstep",
 parser.add_argument("-f", "--o_format", dest="oformat",
                     choices=['netcdf3', 'netcdf4_parallel', 'pnetcdf'],
                     help="output format", default='netcdf3')
+parser.add_argument("-g", "--grid", dest="grid", type=int,
+                    choices=accepted_resolutions(),
+                    help="horizontal grid resolution", default=1000)
 parser.add_argument("-i", "--input_file", dest="input_file",
                     help="Input file to restart from", default=None)
 parser.add_argument("-q", '--queue', dest="queue", choices=list_queues(),
