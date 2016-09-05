@@ -205,15 +205,15 @@ def generate_grid_description(grid_resolution, accepted_resolutions, domain):
     horizontal_grid['My'] = my
 
     if grid_resolution < 200:
-        skip_max = 200
+        skip_max = 500
         mz = 101
         mzb = 21
     elif (grid_resolution >= 200) and (grid_resolution <= 500):
-        skip_max = 50
+        skip_max = 250
         mz = 51
         mzb = 11
     else:
-        skip_max = 10
+        skip_max = 100
         mz = 26
         mzb = 6
 

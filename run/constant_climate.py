@@ -75,7 +75,7 @@ grid = options.grid
 stress_balance = options.stress_balance
 
 start = options.start
-end  = options.duration
+end  = start + options.duration
 exstep = options.exstep
 domain = options.domain
 pism_exec = generate_domain(domain)
