@@ -43,8 +43,6 @@ parser.add_argument("-g", "--grid", dest="grid", type=int,
                     help="horizontal grid resolution", default=1000)
 parser.add_argument("-i", "--input_file", dest="input_file",
                     help="Input file to restart from", default=None)
-parser.add_argument("-q", '--queue', dest="queue", choices=list_queues(),
-                    help='''queue. default=t1standard.''', default='normal')
 parser.add_argument("--o_dir", dest="odir",
                     help="output directory. Default: current directory", default='test')
 parser.add_argument("--o_size", dest="osize",
