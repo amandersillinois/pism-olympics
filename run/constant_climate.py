@@ -29,6 +29,8 @@ parser.add_argument("--climate", dest="climate",
 parser.add_argument("-d", "--domain", dest="domain",
                     choices=['olympics', 'olympics_mtns'],
                     help="sets the modeling domain", default='olympics')
+parser.add_argument("--start_year", dest="start",
+                    help="Start year", default=0)
 parser.add_argument("--duration", dest="duration",
                     help="Duration of run", default=10)
 parser.add_argument("--exstep", dest="exstep",
@@ -36,9 +38,10 @@ parser.add_argument("--exstep", dest="exstep",
 parser.add_argument("-f", "--o_format", dest="oformat",
                     choices=['netcdf3', 'netcdf4_parallel', 'pnetcdf'],
                     help="output format", default='netcdf3')
-parser.add_argument("-g", "--grid", dest="grid", type=int,
-                    choices=accepted_resolutions(),
-                    help="horizontal grid resolution", default=1000)
+parser.add_argument("-i", "--input_file", dest="input_file",
+                    help="Input file to restart from", default=None)
+parser.add_argument("-q", '--queue', dest="queue", choices=list_queues(),
+                    help='''queue. default=t1standard.''', default='normal')
 parser.add_argument("--o_dir", dest="odir",
                     help="output directory. Default: current directory", default='test')
 parser.add_argument("--o_size", dest="osize",
@@ -70,10 +73,12 @@ duration = options.duration
 grid = options.grid
 stress_balance = options.stress_balance
 
+start = options.start
+end  = options.duration
 exstep = options.exstep
 domain = options.domain
 pism_exec = generate_domain(domain)
-
+input_file = options.input_file
 pism_dataname = 'pism_{domain}_{grid}m_v{version}.nc'.format(domain=domain.capitalize(),
                                                              grid=grid,
                                                              version=bed_version)
@@ -94,8 +99,6 @@ if not os.path.isfile(pism_config_nc):
            pism_config_nc, pism_config_cdl]
     sub.call(cmd)
 
-start = 0
-end = duration
 
 hydrology = 'diffuse'
 
@@ -154,8 +157,11 @@ for n, combination in enumerate(combinations):
 
         # Setup General Parameters
         general_params_dict = OrderedDict()
-        general_params_dict['i'] = pism_dataname
-        general_params_dict['bootstrap'] = ''
+        if input is not None:
+            general_params_dict['i'] = input_file
+        else:
+            general_params_dict['i'] = pism_dataname
+            general_params_dict['bootstrap'] = ''
         general_params_dict['ys'] = start
         general_params_dict['ye'] = end
         general_params_dict['o'] = os.path.join(odir, outfile)
