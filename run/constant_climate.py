@@ -158,20 +158,22 @@ for n, combination in enumerate(combinations):
 
         # Setup General Parameters
         general_params_dict = OrderedDict()
-        if input is not None:
-            general_params_dict['i'] = input_file
-        else:
+        if input_file is None:
             general_params_dict['i'] = pism_dataname
             general_params_dict['bootstrap'] = ''
+        else:
+            general_params_dict['i'] = input_file
         general_params_dict['ys'] = start
         general_params_dict['ye'] = end
         general_params_dict['o'] = os.path.join(odir, outfile)
         general_params_dict['o_format'] = oformat
         general_params_dict['o_size'] = osize
         general_params_dict['config_override'] = pism_config_nc
-
         
-        grid_params_dict = generate_grid_description(grid, accepted_resolutions(), domain)
+        if input_file is None:
+            grid_params_dict = generate_grid_description(grid, accepted_resolutions(), domain)
+        else:
+            grid_params_dict = generate_grid_description(grid, accepted_resolutions(), domain, restart=True)
 
         # Setup Stress Balance Paramters
         sb_params_dict = OrderedDict()
