@@ -46,8 +46,8 @@ parser.add_argument("-i", "--input_file", dest="input_file",
 parser.add_argument("--o_dir", dest="odir",
                     help="output directory. Default: current directory", default='test')
 parser.add_argument("--o_size", dest="osize",
-                    choices=['small', 'medium', 'big', '2dbig'],
-                    help="output size type", default='medium')
+                    choices=['small', 'medium', 'big', 'big_2d'],
+                    help="output size type", default='big_2d')
 parser.add_argument("-s", "--system", dest="system",
                     choices=list_systems(),
                     help="computer system to use.", default='debug')
@@ -90,15 +90,14 @@ if not os.path.isdir(odir):
 pism_config = 'olympics_config'
 pism_config_nc = '.'.join([pism_config, 'nc'])
 pism_config_cdl = os.path.join('../config', '.'.join([pism_config, 'cdl']))
-if not os.path.isfile(pism_config_nc):
-    # Anaconda libssl problem on chinook
-    if system in ('chinook'):
-        ncgen = '/usr/bin/ncgen'
-    else:
-        ncgen = 'ncgen'
-    cmd = [ncgen, '-o',
-           pism_config_nc, pism_config_cdl]
-    sub.call(cmd)
+# Anaconda libssl problem on chinook
+if system in ('chinook'):
+    ncgen = '/usr/bin/ncgen'
+else:
+    ncgen = 'ncgen'
+cmd = [ncgen, '-o',
+       pism_config_nc, pism_config_cdl]
+sub.call(cmd)
 
 
 hydrology = 'diffuse'
@@ -188,7 +187,7 @@ for n, combination in enumerate(combinations):
         stress_balance_params_dict = generate_stress_balance(stress_balance, sb_params_dict)
 
         # Setup Climate Forcing
-        climate_file = 'ltop_climate_olympics_{grid}m_mm_hr-1.nc'.format(grid=grid)
+        climate_file = 'ltop_climate_olympics_{grid}m_kg_m-2_hr-1.nc'.format(grid=grid)
         climate_params_dict = generate_climate(climate, atmosphere_given_file=climate_file, atmosphere_lapse_rate_file=climate_file)
         # Setup Ocean Forcing
         ocean_params_dict = generate_ocean('null')
