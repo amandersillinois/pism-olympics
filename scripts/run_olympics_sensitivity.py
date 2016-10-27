@@ -153,21 +153,28 @@ if __name__ == "__main__":
     Hw_values = [3200]
     magnitude_values = [15, 20]
     direction_values = [248]
+    background_precip_values = [0, 10]  # mm hr-1
 
     if shp_file is not None:
         stations = read_shapefile(shp_file)
         
-    combinations = list(itertools.product(tau_c_values, tau_f_values, Nm_values, Hw_values, magnitude_values, direction_values))
+    combinations = list(itertools.product(tau_c_values, tau_f_values, Nm_values, Hw_values, magnitude_values, direction_values, background_precip_values))
     n_exp = len(combinations)
     st_data = dict()
     with open('ltop_sensitivity.csv', 'w') as f:
         csvwriter = csv.writer(f)
-        csvwriter.writerow(['lon', 'lat', 'p_obs', 'p_obs_units']
-                           + operator.add(['exp_{}'.format(x) for x in range(n_exp)], ['exp_{}_str'.format(x) for x in range(n_exp)]) + ['p_exp_units'])
+        a = ['exp_{}'.format(x) for x in range(n_exp)]
+        b = ['exp_{}_str'.format(x) for x in range(n_exp)]
+        exp_list = []
+        for k in range(len(a)):
+            exp_list.append(a[k])
+            exp_list.append(b[k])
+        csvwriter.writerow(['lon', 'lat', 'p_obs', 'p_obs_units'] + exp_list
+                           + ['p_exp_units'])
         for exp_no, combination in enumerate(combinations):
 
-            tau_c, tau_f, Nm, Hw, magnitude, direction = combination
-            out_name = '_'.join(['ltop_olymics_precip', ounits.replace(' ', '_'), 'tauc', str(tau_c), 'tauf', str(tau_f), 'Nm', str(Nm), 'Hw', str(Hw), 'mag', str(magnitude), 'dir', str(direction)])
+            tau_c, tau_f, Nm, Hw, magnitude, direction, P0 = combination
+            out_name = '_'.join(['ltop_olymics_precip', ounits.replace(' ', '_'), 'tauc', str(tau_c), 'tauf', str(tau_f), 'Nm', str(Nm), 'Hw', str(Hw), 'mag', str(magnitude), 'dir', str(direction), 'p0', str(P0)])
             print('Running exp {} {}'.format(exp_no, out_name))
 
             physical_constants = dict()
