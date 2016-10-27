@@ -8,7 +8,6 @@ except:
     import subprocess as sub
 import csv
 import operator
-
 import logging
 logger = logging.getLogger('LTOP')
 
@@ -43,7 +42,6 @@ def read_shapefile(filename):
         srs_geo = osr.SpatialReference()
         srs_geo.ImportFromEPSG(4326)
     cnt = layer.GetFeatureCount()
-    print cnt
     stations = dict()
     if layer.GetGeomType() == 1:
         for pt in range(0, cnt):
@@ -53,10 +51,10 @@ def read_shapefile(filename):
             if not srs.IsGeographic():
                 geometry.TransformTo(srs_geo)                
             point = geometry.GetPoint()
-            print point
             data = dict()
             data['point'] = [point[0], point[1]]
             data['p_obs'] = feature.precip
+            data['p_obs_units'] = 'm yr-1'
             stations[pt] = data
 
     return stations
@@ -160,10 +158,12 @@ if __name__ == "__main__":
         stations = read_shapefile(shp_file)
         
     combinations = list(itertools.product(tau_c_values, tau_f_values, Nm_values, Hw_values, magnitude_values, direction_values))
+    n_exp = len(combinations)
     st_data = dict()
     with open('ltop_sensitivity.csv', 'w') as f:
         csvwriter = csv.writer(f)
-        # csvwriter.writerow(['lon', 'lat', 'tau_c', 'tau_f', 'Nm', 'Hw', 'wind_speed', 'wind_direction', 'precip', 'precip_unit'])
+        csvwriter.writerow(['lon', 'lat', 'p_obs', 'p_obs_units']
+                           + operator.add(['exp_{}'.format(x) for x in range(n_exp)], ['exp_{}_str'.format(x) for x in range(n_exp)]) + ['p_exp_units'])
         for exp_no, combination in enumerate(combinations):
 
             tau_c, tau_f, Nm, Hw, magnitude, direction = combination
@@ -211,5 +211,6 @@ if __name__ == "__main__":
 
         for k in stations:
             station = stations[k]            
-            lon, lat =  station['point'][0:2]
-            print lon, lat, station['p_obs'], reduce(operator.add, station['exp'])
+            lon, lat =  station['point']
+            row = [lon, lat, station['p_obs'], station['p_obs_units']] + sum(station['exp'].values(), []) + [ounits]
+            csvwriter.writerow(row)
