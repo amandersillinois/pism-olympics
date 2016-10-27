@@ -7,11 +7,15 @@ try:
 except:
     import subprocess as sub
 import csv
+import operator
+
 import logging
 logger = logging.getLogger('LTOP')
+
 from linear_orog_precip import OrographicPrecipitation, ReadRaster, array2raster
 
 np.seterr(divide='ignore', invalid='ignore')
+
 
 def read_shapefile(filename):
     '''
@@ -39,7 +43,8 @@ def read_shapefile(filename):
         srs_geo = osr.SpatialReference()
         srs_geo.ImportFromEPSG(4326)
     cnt = layer.GetFeatureCount()
-    stations = []
+    print cnt
+    stations = dict()
     if layer.GetGeomType() == 1:
         for pt in range(0, cnt):
             feature = layer.GetFeature(pt)
@@ -48,7 +53,11 @@ def read_shapefile(filename):
             if not srs.IsGeographic():
                 geometry.TransformTo(srs_geo)                
             point = geometry.GetPoint()
-            stations.append([point[0], point[1]])
+            print point
+            data = dict()
+            data['point'] = [point[0], point[1]]
+            data['p_obs'] = feature.precip
+            stations[pt] = data
 
     return stations
 
@@ -149,17 +158,17 @@ if __name__ == "__main__":
 
     if shp_file is not None:
         stations = read_shapefile(shp_file)
-        print stations
         
     combinations = list(itertools.product(tau_c_values, tau_f_values, Nm_values, Hw_values, magnitude_values, direction_values))
+    st_data = dict()
     with open('ltop_sensitivity.csv', 'w') as f:
         csvwriter = csv.writer(f)
         # csvwriter.writerow(['lon', 'lat', 'tau_c', 'tau_f', 'Nm', 'Hw', 'wind_speed', 'wind_direction', 'precip', 'precip_unit'])
-        for combination in combinations:
+        for exp_no, combination in enumerate(combinations):
 
             tau_c, tau_f, Nm, Hw, magnitude, direction = combination
             out_name = '_'.join(['ltop_olymics_precip', ounits.replace(' ', '_'), 'tauc', str(tau_c), 'tauf', str(tau_f), 'Nm', str(Nm), 'Hw', str(Hw), 'mag', str(magnitude), 'dir', str(direction)])
-            print('Running combination {}'.format(out_name))
+            print('Running exp {} {}'.format(exp_no, out_name))
 
             physical_constants = dict()
             physical_constants['tau_c'] = tau_c      # conversion time [s]
@@ -191,12 +200,16 @@ if __name__ == "__main__":
 
             array2raster(out_file, gd.geoTrans, gd.proj4, units, P)
             precips = []
-            for station in stations:
-                lon, lat =  station[0:2]
+            for k in stations:
+                station = stations[k]
+                lon, lat =  station['point'][0:2]
                 cmd = ['gdallocationinfo', '-wgs84', '-valonly', out_file, str(lon), str(lat)]
                 result = sub.Popen(cmd, stdout=sub.PIPE)
                 precip = float(result.stdout.read().rstrip('\n'))
-                precips.append(precip)
-            row = [x for x in combination] + precips + [ounits]
-            print row
-            csvwriter.writerow(row)
+                st_data[exp_no] = [precip, ';'.join([str(x) for x in combination])]
+                station['exp'] = st_data
+
+        for k in stations:
+            station = stations[k]            
+            lon, lat =  station['point'][0:2]
+            print lon, lat, station['p_obs'], reduce(operator.add, station['exp'])
