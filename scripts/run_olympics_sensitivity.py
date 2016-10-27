@@ -91,6 +91,8 @@ if __name__ == "__main__":
     logger.addHandler(ch)
     logger.addHandler(fh)
     parser = ArgumentParser()
+    parser.add_argument('-o', dest='csv_file',
+                        help='CSV output file name', default='ltop_olympics_default.csv')
     parser.add_argument('-i', dest='in_file',
                         help='Gdal-readable DEM', default=None)
     parser.add_argument('-g', '--shape_file', dest='shp_file',
@@ -127,6 +129,7 @@ if __name__ == "__main__":
     options = parser.parse_args()
     in_file = options.in_file
     shp_file = options.shp_file
+    csv_file = options.csv_file
     direction = options.direction
     lat = options.lat
     magnitude = options.magnitude
@@ -161,7 +164,7 @@ if __name__ == "__main__":
     combinations = list(itertools.product(tau_c_values, tau_f_values, Nm_values, Hw_values, magnitude_values, direction_values, background_precip_values))
     n_exp = len(combinations)
     st_data = dict()
-    with open('ltop_sensitivity.csv', 'w') as f:
+    with open(csv_file, 'w') as f:
         csvwriter = csv.writer(f)
         a = ['exp_{}'.format(x) for x in range(n_exp)]
         b = ['exp_{}_str'.format(x) for x in range(n_exp)]
