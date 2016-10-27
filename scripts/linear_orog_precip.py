@@ -1,40 +1,28 @@
-import logging
-import logging.handlers
 from scipy.fftpack import fft2, fftfreq
 import numpy as np
 import cmath
 from osgeo import gdal, osr
+import logging
+logger = logging.getLogger('LTOP')
 
-# create logger
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+np.seterr(divide='ignore', invalid='ignore')
 
-# create file handler which logs even debug messages
-fh = logging.handlers.RotatingFileHandler('ltop.log')
-fh.setLevel(logging.DEBUG)
-# create console handler with a higher log level
-ch = logging.StreamHandler()
-ch.setLevel(logging.ERROR)
-# create formatter
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(lineno)d - %(message)s')
-
-# add formatter to ch and fh
-ch.setFormatter(formatter)
-fh.setFormatter(formatter)
-
-# add ch to logger
-logger.addHandler(ch)
-logger.addHandler(fh)
 
 class OrographicPrecipitation(object):
 
-    """Calculates orographic precipitation following Smith & Barstad (2004).
+    """
+    Calculates orographic precipitation following Smith & Barstad (2004).
 
     """
 
-    def __init__(self, X, Y, Orography, physical_constants, truncate=True, ounits=None):
-        self.logger = logger or logging.getLogger(__name__, logger=None)
-        self.logger.info('Initializing instance of OrographicPrecipitation')
+    def __init__(
+            self,
+            X,
+            Y,
+            Orography,
+            physical_constants,
+            truncate=True,
+            ounits=None):
         self.X = X
         self.Y = Y
         self.Orography = Orography
@@ -52,102 +40,132 @@ class OrographicPrecipitation(object):
             self.P_units = 'mm hr-1'
 
     def _compute_precip(self, ounits):
-
+        logger.info('Running _compute_precip')
         physical_constants = self.physical_constants
+        eps = 1e-18
+        pad_max = 200
         pad = int(np.ceil(((self.nx + self.ny) / 2) / 100)) * 100
-        logger.debug('Orography.shape {}'.format(self.Orography.shape))    
+        if pad > pad_max:
+            pad = pad_max
+        logger.debug(
+            'Raster shape before padding ({},{})'.format(
+                self.nx, self.ny))
         Orography = np.pad(self.Orography, pad, 'constant')
-        logger.debug('Padded Orography.shape {}'.format(Orography.shape))    
+        nx, ny = Orography.shape
+        logger.debug('Raster shape after padding ({},{})'.format(ny, nx))
         logger.info('Fourier transform orography')
         Orography_fft = np.fft.fft2(Orography)
         dx = self.dx
         dy = self.dy
-        nx, ny = Orography.shape
-        x_n_value = np.fft.fftfreq(len(Orography[1, :]), (1.0 / len(Orography[1, :])))
-        y_n_value = np.fft.fftfreq(len(Orography), (1.0 / len(Orography)))
+        x_n_value = np.fft.fftfreq(
+            ny, (1.0 / ny))
+        y_n_value = np.fft.fftfreq(nx, (1.0 / nx))
 
-        x_len = len(Orography) * dx
-        y_len = len(Orography[1, :]) * dy
+        x_len = nx * dx
+        y_len = ny * dy
         kx_line = np.divide(np.multiply(2.0 * np.pi, x_n_value), x_len)
-        ky_line = np.divide(np.multiply(2.0 * np.pi, y_n_value), y_len)[np.newaxis].T
+        ky_line = np.divide(
+            np.multiply(
+                2.0 * np.pi,
+                y_n_value),
+            y_len)[
+            np.newaxis].T
 
-        logger.info('Calculate wave numbers')
         kx = np.tile(kx_line, (nx, 1))
         ky = np.tile(ky_line, (1, ny))
-        logger.debug('kx.shape {}, ky.shape {}'.format(kx.shape, ky.shape))
 
         # Intrinsic frequency sigma = U*k + V*l
-        logger.info('Calculate intrinsic frequency sigma')
         u0 = physical_constants['u']
         v0 = physical_constants['v']
+        logger.info('Calculate sigma')
         sigma = np.add(np.multiply(kx, u0), np.multiply(ky, v0))
-        eps = 1e-18
         sigma_sqr_reg = sigma ** 2
-        sigma_sqr_reg[np.logical_and(np.fabs(sigma_sqr_reg) < eps, np.fabs(sigma_sqr_reg >= 0))] = eps
-        sigma_sqr_reg[np.logical_and(np.fabs(sigma_sqr_reg) < eps, np.fabs(sigma_sqr_reg < 0))] = -eps
-        
+        m_denom = np.power(sigma, 2.) - physical_constants['f']**2
+
+        sigma_sqr_reg[
+            np.logical_and(
+                np.fabs(sigma_sqr_reg) < eps,
+                np.fabs(
+                    sigma_sqr_reg >= 0))] = eps
+        sigma_sqr_reg[
+            np.logical_and(
+                np.fabs(sigma_sqr_reg) < eps,
+                np.fabs(
+                    sigma_sqr_reg < 0))] = -eps
+
         # The vertical wave number
         # Eqn. 12
-        m_denom = np.power(sigma, 2.) - physical_constants['f']**2
         # Regularization
-        m_reg = 1e-18
-        m_denom[np.logical_and(np.fabs(m_denom) < m_reg, np.fabs(m_denom) >= 0)] = m_reg
-        m_denom[np.logical_and(np.fabs(m_denom) < m_reg, np.fabs(m_denom) < 0)] = -m_reg
+        m_denom[
+            np.logical_and(
+                np.fabs(m_denom) < eps,
+                np.fabs(m_denom) >= 0)] = eps
+        m_denom[
+            np.logical_and(
+                np.fabs(m_denom) < eps,
+                np.fabs(m_denom) < 0)] = -eps
 
-        m1 = np.divide(np.subtract(physical_constants['Nm']**2, np.power(sigma, 2.)), m_denom)
+        m1 = np.divide(
+            np.subtract(
+                physical_constants['Nm']**2,
+                np.power(
+                    sigma,
+                    2.)),
+            m_denom)
         m2 = np.add(np.power(kx, 2.), np.power(ky, 2.))
         m_sqr = np.multiply(m1, m2)
+        logger.info('Calculating m')
         m = np.sqrt(-1 * m_sqr)
         # Regularization
-        m[np.logical_and(m_sqr >= 0, sigma == 0)] = np.sqrt(m_sqr[np.logical_and(m_sqr >= 0, sigma == 0)])
-        m[np.logical_and(m_sqr >= 0, sigma != 0)] = np.sqrt(m_sqr[np.logical_and(m_sqr >= 0, sigma != 0)]) * np.sign(sigma[np.logical_and(m_sqr >= 0, sigma != 0)])
+        m[np.logical_and(m_sqr >= 0, sigma == 0)] = np.sqrt(
+            m_sqr[np.logical_and(m_sqr >= 0, sigma == 0)])
+        m[np.logical_and(m_sqr >= 0, sigma != 0)] = np.sqrt(m_sqr[np.logical_and(
+            m_sqr >= 0, sigma != 0)]) * np.sign(sigma[np.logical_and(m_sqr >= 0, sigma != 0)])
         # Numerator in Eqn. 49
-        P_karot_num = np.multiply(np.multiply(np.multiply(physical_constants['Cw'], cmath.sqrt(-1)), sigma), Orography_fft)
-        P_karot_denom_Hw = np.subtract(1, np.multiply(np.multiply(physical_constants['Hw'], m), cmath.sqrt(-1)))
-        P_karot_denom_tauc = np.add(1, np.multiply(np.multiply(sigma, physical_constants['tau_c']), cmath.sqrt(-1)))
-        P_karot_denom_tauf = np.add(1, np.multiply(np.multiply(sigma, physical_constants['tau_f']), cmath.sqrt(-1)))
+        P_karot_num = np.multiply(np.multiply(np.multiply(
+            physical_constants['Cw'], cmath.sqrt(-1)), sigma), Orography_fft)
+        P_karot_denom_Hw = np.subtract(1, np.multiply(
+            np.multiply(physical_constants['Hw'], m), cmath.sqrt(-1)))
+        P_karot_denom_tauc = np.add(1, np.multiply(np.multiply(
+            sigma, physical_constants['tau_c']), cmath.sqrt(-1)))
+        P_karot_denom_tauf = np.add(1, np.multiply(np.multiply(
+            sigma, physical_constants['tau_f']), cmath.sqrt(-1)))
         # Denominator in Eqn. 49
-        P_karot_denom = np.multiply(P_karot_denom_Hw, np.multiply(P_karot_denom_tauc, P_karot_denom_tauf))
-        # P_karot_denom = 1
+        P_karot_denom = np.multiply(
+            P_karot_denom_Hw, np.multiply(
+                P_karot_denom_tauc, P_karot_denom_tauf))
         P_karot = np.divide(P_karot_num, P_karot_denom)
 
-        P_karot_amp = np.absolute(P_karot)  # get the amplitude
-        P_karot_angle = np.angle(P_karot)   # get the phase angle
-
         # Converting from wave domain back to space domain
-        y3 = np.fft.ifft2(P_karot)
+        logger.info('Performing inverse Fourier transform')
+        P = np.fft.ifft2(P_karot)
         spy = 31556925.9747
-        P = np.multiply(np.real(y3), 3600)   # mm hr-1
+        logger.info('De-pad array')
         P = P[pad:-pad, pad:-pad]
+        P = np.multiply(np.real(P), 3600)   # mm hr-1
         # Add background precip
-        P += physical_constants['P0']
+        P0 = physical_constants['P0']
+        logger.info('Adding background precpipitation {} mm hr-1'.format(P0))
+        P += P0
         # Truncation
         truncate = self.truncate
         if truncate is True:
+            logger.info('Truncate precipitation')
             P[P < 0] = 0
         P_scale = physical_constants['P_scale']
-        P *= P_scale 
-        if logger.level >= logging.DEBUG:
-            self.Orography_fft = Orography_fft
-            self.sigma = sigma
-            self.m_denom = m_denom
-            self.m_sqr = m_sqr
-            self.m = m
-            self.P_karot = P_karot
-            self.P_karot_denom = P_karot_denom
-            self.P_karot_denom = P_karot_denom_Hw
-            self.P_karot_denom_tauc = P_karot_denom_tauc
-            self.P_karot_denom_tauf = P_karot_denom_tauf
+        logger.info('Scale precipitation P = P * {}'.format(P_scale))
+        P *= P_scale
 
         if ounits is not None:
             import cf_units
             in_units = cf_units.Unit('mm hr-1')
             out_units = cf_units.Unit(ounits)
+            logger.info('Converting mm hr-1 to {}'.format(ounits))
             P = in_units.convert(P, out_units)
         return P
 
 
-class GdalFile(object):
+class ReadRaster(object):
 
     '''
     A class to read a GDAL File
@@ -159,22 +177,19 @@ class GdalFile(object):
     '''
 
     def __init__(self, file_name):
-        logger.info('Initializing instance of GdalFile')
         self.file_name = file_name
         try:
             print("\n  opening file %s" % file_name)
-            self.ds = gdal.Open(file_name)
+            ds = gdal.Open(file_name)
         except:
             print("  could not open file %s" % file_name)
 
-        self.RasterArray = self.ds.ReadAsArray()
-        self.projection = self.ds.GetProjection()
-        logger.info('Found projection {}'.format(self.projection))
+        self.RasterArray = ds.ReadAsArray()
+        self.projection = ds.GetProjection()
 
-        geoT = self.ds.GetGeoTransform()
-        logger.info('GeoTransform is {}'.format(geoT))
-        pxwidth = self.ds.RasterXSize
-        pxheight = self.ds.RasterYSize
+        geoT = ds.GetGeoTransform()
+        pxwidth = ds.RasterXSize
+        pxheight = ds.RasterYSize
         ulx = geoT[0]
         uly = geoT[3]
         rezX = geoT[1]
@@ -204,7 +219,6 @@ def array2raster(newRasterfn, geoTrans, proj4, units, array):
 
     '''
 
-    logger.info('Saving {} as netcdf file'.format(newRasterfn))
     cols = array.shape[1]
     rows = array.shape[0]
 
@@ -217,25 +231,49 @@ def array2raster(newRasterfn, geoTrans, proj4, units, array):
     outRasterSRS = osr.SpatialReference()
     outRasterSRS.ImportFromProj4(proj4)
     outRaster.SetProjection(outRasterSRS.ExportToWkt())
-    logger.info('Write {} to disk'.format(newRasterfn))
     outband.FlushCache()
 
 
 if __name__ == "__main__":
-    print('Linear Orographic Precipitation Model by Smith & Barstad (2004)')
+    print('Linear Theory Orographic Precipitation Model by Smith & Barstad (2004)')
 
-    import pylab as plt
-    from matplotlib import cm
     import itertools
     from argparse import ArgumentParser
 
+    import logging
+    import logging.handlers
+
+    # create logger
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+
+    # create file handler which logs even debug messages
+    fh = logging.handlers.RotatingFileHandler('ltop.log')
+    fh.setLevel(logging.DEBUG)
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.ERROR)
+    # create formatter
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(lineno)d - %(message)s')
+    # add formatter to ch and fh
+    ch.setFormatter(formatter)
+    fh.setFormatter(formatter)
+
+    # add ch to logger
+    logger.addHandler(ch)
+    logger.addHandler(fh)
     parser = ArgumentParser()
     parser.add_argument('-i', dest='in_file',
                         help='Gdal-readable DEM', default=None)
     parser.add_argument('-o', dest='out_file',
                         help='Output file', default='foo.nc')
-    parser.add_argument('--background_precip', dest='P0', type=float,
-                        help='Background precipitation rate [mm hr-1].', default=0.)
+    parser.add_argument(
+        '--background_precip',
+        dest='P0',
+        type=float,
+        help='Background precipitation rate [mm hr-1].',
+        default=0.)
     parser.add_argument('--precip_scale_factor', dest='P_scale', type=float,
                         help='Precipitation scale factor.', default=1.)
     parser.add_argument('--no_trunc', dest='truncate', action='store_false',
@@ -250,13 +288,15 @@ if __name__ == "__main__":
                         help='moist stability frequency [s-1].', default=0.005)
     parser.add_argument('--vapor_scale_height', dest='Hw', type=float,
                         help='Water vapor scale height [m].', default=2500)
-    parser.add_argument('--wind_direction', dest='direction', type=float,
-                        help='Direction from which the wind is coming.', default=270)
+    parser.add_argument(
+        '--wind_direction',
+        dest='direction',
+        type=float,
+        help='Direction from which the wind is coming.',
+        default=270)
     parser.add_argument('--wind_magnitude', dest='magnitude', type=float,
                         help='Magnitude of wind velocity [m/s].', default=15)
 
-
-    logger.info('Parsing options.')
     options = parser.parse_args()
     in_file = options.in_file
     out_file = options.out_file
@@ -270,11 +310,9 @@ if __name__ == "__main__":
     Hw = options.Hw
     P0 = options.P0
     P_scale = options.P_scale
-    logger.info('Parsing options. Done.')
 
-    
     if in_file is not None:
-        gd = GdalFile(in_file)
+        gd = ReadRaster(in_file)
         X = gd.X
         Y = gd.Y
         Orography = gd.RasterArray
@@ -287,7 +325,8 @@ if __name__ == "__main__":
         y0 = 0
         sigma_x = sigma_y = 15e3
         X, Y = np.meshgrid(x, y)
-        Orography = h_max * np.exp(-(((X-x0)**2/(2*sigma_x**2))+((Y-y0)**2/(2*sigma_y**2))))
+        Orography = h_max * \
+            np.exp(-(((X - x0)**2 / (2 * sigma_x**2)) + ((Y - y0)**2 / (2 * sigma_y**2))))
 
     Theta_m = -6.5     # K / km
     rho_Sref = 7.4e-3  # kg m-3
@@ -296,19 +335,25 @@ if __name__ == "__main__":
     physical_constants = dict()
     physical_constants['tau_c'] = tau_c      # conversion time [s]
     physical_constants['tau_f'] = tau_f      # fallout time [s]
-    physical_constants['f'] = 2 * 7.2921e-5 * np.sin(lat * np.pi / 180) # Coriolis force
+    physical_constants['f'] = 2 * 7.2921e-5 * \
+        np.sin(lat * np.pi / 180)  # Coriolis force
     physical_constants['Nm'] = Nm   # moist stability frequency [s-1]
-    physical_constants['Cw'] = rho_Sref * Theta_m / gamma # uplift sensitivity factor [kg m-3]
+    physical_constants['Cw'] = rho_Sref * Theta_m / \
+        gamma  # uplift sensitivity factor [kg m-3]
     physical_constants['Hw'] = Hw         # vapor scale height
-    physical_constants['u'] = -np.sin(direction*2*np.pi/360) * magnitude    # x-component of wind vector [m s-1]
-    physical_constants['v'] = np.cos(direction*2*np.pi/360) * magnitude   # y-component of wind vector [m s-1]
-    # physical_constants['u'] = -15    # x-component of wind vector [m s-1]
-    # physical_constants['v'] = 0   # y-component of wind vector [m s-1]
+    # x-component of wind vector [m s-1]
+    physical_constants['u'] = -np.sin(direction * 2 * np.pi / 360) * magnitude
+    # y-component of wind vector [m s-1]
+    physical_constants['v'] = np.cos(direction * 2 * np.pi / 360) * magnitude
     physical_constants['P0'] = P0   # background precip [mm hr-1]
     physical_constants['P_scale'] = P_scale   # precip scale factor [1]
-    logger.debug('Physical constants: {}'.format(physical_constants))
-    
-    OP = OrographicPrecipitation(X, Y, Orography, physical_constants, truncate=truncate)
+
+    OP = OrographicPrecipitation(
+        X,
+        Y,
+        Orography,
+        physical_constants,
+        truncate=truncate)
     P = OP.P
     units = OP.P_units
 
@@ -317,13 +362,3 @@ if __name__ == "__main__":
     else:
         geoTrans = [0., OP.dx, 0., 0., 0., -OP.dy]
         array2raster(out_file, geoTrans, '', units, P)
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        c = ax.pcolormesh(X, Y, P)
-        plt.colorbar(c)
-        ax.contour(X, Y, Orography, np.arange(0, 600, 100), colors='0.')
-        cs = ax.contour(X, Y, P, np.arange(0.025, 2.425, 0.4), colors='1.')
-        plt.clabel(cs, inline=1, fontsize=10)
-        ax.set_xlim(-100e3, 200e3)
-        ax.set_ylim(-150e3, 150e3)
-        plt.show()
