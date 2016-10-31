@@ -1,4 +1,4 @@
-Station_ID	Station Name	Lat dd	Long dd	elev (m)	precip (m)									
+Station_ID	Name	Lat	Long	elev 	precip									
 450008-1	Aberdeen 	46.983333	-123.816667	3.048	2.12471									
 450012-1	Aberdeen 20 NNE Wishka	47.266667	-123.7	134.112	3.367278									
 450872-3	Bremerton	47.566667	-122.666667	48.768	1.313942									
