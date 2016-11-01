@@ -166,8 +166,8 @@ if __name__ == "__main__":
     st_data = dict()
     with open(csv_file, 'w') as f:
         csvwriter = csv.writer(f)
-        a = ['exp_{}'.format(x) for x in range(n_exp)]
-        b = ['exp_{}_str'.format(x) for x in range(n_exp)]
+        a = ['p_exp_{}'.format(x) for x in range(n_exp)]
+        b = ['p_exp_{}_str'.format(x) for x in range(n_exp)]
         exp_list = []
         for k in range(len(a)):
             exp_list.append(a[k])
@@ -216,11 +216,13 @@ if __name__ == "__main__":
                 cmd = ['gdallocationinfo', '-wgs84', '-valonly', out_file, str(lon), str(lat)]
                 result = sub.Popen(cmd, stdout=sub.PIPE)
                 precip = float(result.stdout.read().rstrip('\n'))
-                st_data[exp_no] = [precip, ';'.join([str(x) for x in combination])]
-                station['exp'] = st_data
+                precips.append(precip)
+            print exp_no, [precips, ';'.join([str(x) for x in combination])]
+            st_data[exp_no] = [precips, ';'.join([str(x) for x in combination])]
+            station['p_exp'] = st_data
 
         for k in stations:
             station = stations[k]            
             lon, lat =  station['point']
-            row = [lon, lat, station['p_obs'], station['p_obs_units']] + sum(station['exp'].values(), []) + [ounits]
+            row = [lon, lat, station['p_obs'], station['p_obs_units']] + sum(station['p_exp'].values(), []) + [ounits]
             csvwriter.writerow(row)

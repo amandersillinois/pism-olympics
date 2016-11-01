@@ -8,6 +8,6 @@ parser.add_argument('FILE', nargs=1,
                     help='CSV input file name')
 
 options = parser.parse_args()
-csv_file = options.FILE
+csv_file = options.FILE[0]
 
-data = pa.read_csv(csv_file)
+df = pa.read_csv(csv_file)
