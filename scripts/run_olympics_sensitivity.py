@@ -217,12 +217,15 @@ if __name__ == "__main__":
                 result = sub.Popen(cmd, stdout=sub.PIPE)
                 precip = float(result.stdout.read().rstrip('\n'))
                 precips.append(precip)
-            print exp_no, [precips, ';'.join([str(x) for x in combination])]
             st_data[exp_no] = [precips, ';'.join([str(x) for x in combination])]
-            station['p_exp'] = st_data
 
         for k in stations:
-            station = stations[k]            
+            station = stations[k]
+            station['p_exp'] = dict()
+            for exp in st_data:
+                print k, exp , st_data[exp][0][k], st_data[exp][1]
+                station['p_exp'][exp] = [st_data[exp][0][k], st_data[exp][1]]
             lon, lat =  station['point']
             row = [lon, lat, station['p_obs'], station['p_obs_units']] + sum(station['p_exp'].values(), []) + [ounits]
             csvwriter.writerow(row)
+        print('Done writing {}'.format(csv_file))

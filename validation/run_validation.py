@@ -11,3 +11,5 @@ options = parser.parse_args()
 csv_file = options.FILE[0]
 
 df = pa.read_csv(csv_file)
+def rmse(predictions, targets):
+    return np.sqrt(((predictions - targets) ** 2).mean())
