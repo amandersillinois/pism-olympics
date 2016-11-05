@@ -22,7 +22,8 @@ class OrographicPrecipitation(object):
             Orography,
             physical_constants,
             truncate=True,
-            ounits=None):
+            ounits=None,
+            tomass=False):
         self.X = X
         self.Y = Y
         self.Orography = Orography
@@ -155,13 +156,21 @@ class OrographicPrecipitation(object):
         P_scale = physical_constants['P_scale']
         logger.info('Scale precipitation P = P * {}'.format(P_scale))
         P *= P_scale
+        P += P1
 
         if ounits is not None:
             import cf_units
             in_units = cf_units.Unit('mm hr-1')
             out_units = cf_units.Unit(ounits)
-            logger.info('Converting mm hr-1 to {}'.format(ounits))
-            P = in_units.convert(P, out_units)
+            if tomass:
+                water_density = 1000.
+                logger.info('Converting mm hr-1 to {} using density {}'.format(ounits, water_density))
+                in_units *=  (cf_units.Unit('kg m-3') * water_density)
+                P = in_units.convert(P, out_units)
+            else:
+                logger.info('Converting mm hr-1 to {}'.format(ounits))
+                P = in_units.convert(P, out_units)
+
         return P
 
 
@@ -268,11 +277,21 @@ if __name__ == "__main__":
                         help='Gdal-readable DEM', default=None)
     parser.add_argument('-o', dest='out_file',
                         help='Output file', default='foo.nc')
+    parser.add_argument('--o_units', dest='ounits',
+                        help='Output units. Default: mm hr-1', default='mm hr-1')
+    parser.add_argument('--water_mass_rate', dest='tomass', action='store_true',
+                        help='Use flag if output unit is mass area-2 time-1, use water density. Default: False', default=False)
     parser.add_argument(
-        '--background_precip',
+        '--background_precip_pre',
         dest='P0',
         type=float,
-        help='Background precipitation rate [mm hr-1].',
+        help='Background precipitation rate before scaling [mm hr-1].',
+        default=0.)
+    parser.add_argument(
+        '--background_precip_post',
+        dest='P1',
+        type=float,
+        help='Background precipitation rate after scaling [mm hr-1].',
         default=0.)
     parser.add_argument('--precip_scale_factor', dest='P_scale', type=float,
                         help='Precipitation scale factor.', default=1.)
@@ -309,8 +328,11 @@ if __name__ == "__main__":
     Nm = options.Nm
     Hw = options.Hw
     P0 = options.P0
+    P1 = options.P1
     P_scale = options.P_scale
-
+    ounits = options.ounits
+    tomass = options.tomass
+    
     if in_file is not None:
         gd = ReadRaster(in_file)
         X = gd.X
@@ -353,7 +375,9 @@ if __name__ == "__main__":
         Y,
         Orography,
         physical_constants,
-        truncate=truncate)
+        truncate=truncate,
+        ounits=ounits,
+        tomass=tomass)
     P = OP.P
     units = OP.P_units
 
