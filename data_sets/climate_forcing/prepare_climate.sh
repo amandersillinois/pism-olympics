@@ -1,7 +1,7 @@
 #!/bin/bash
 set -x -e 
 
-for GRID  in 100 200 250 500 1000; do
+for GRID  in 50 100 200 250 500 1000; do
     outfile=ltop_climate_olympics_${GRID}m_kg_m-2_yr-1.nc
     python ../../scripts/linear_orog_precip.py -i ../bed_dem/pism_Olympics_${GRID}m_v1.nc --background_precip_pre 2 --background_precip_post 0.06 --precip_scale_factor 0.0882 --tau_c 1500 --tau_f 1500 --wind_direction 210 --wind_magnitude 20 --moist_stability 0.005 --vapor_scale_height 3500 -o $outfile --o_units 'kg m-2 yr-1' --water_mass_rate
     ncrename -v Band1,precipitation $outfile

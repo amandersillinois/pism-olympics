@@ -11,7 +11,7 @@ version=1
 
 infile=Olympics_30m.tif
 
-for GRID  in 50 100 200 250 500 1000 2000 5000; do
+for GRID  in 50 100 200 250 500 1000; do
     outfile=pism_Olympics_${GRID}m_v${version}.nc
 #    gdalwarp -overwrite -of netCDF -co "FORMAT=NC4" -r average -s_srs EPSG:26710 -t_srs EPSG:26710 -te $xmin $ymin $xmax $ymax -tr $GRID $GRID $infile $outfile
     gdalwarp -overwrite -of GTiff -r average -s_srs EPSG:26710 -t_srs EPSG:26710 -te $xmin $ymin $xmax $ymax -tr $GRID $GRID $infile tmp_${GRID}.tif
