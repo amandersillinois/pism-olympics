@@ -127,6 +127,7 @@ for n, combination in enumerate(combinations):
     sia_e, ppq, tefo, plastic_phi = combination
 
     name_options = OrderedDict()
+    name_options['sb'] = stress_balance
     name_options['sia_e'] = sia_e
     name_options['plastic_phi'] = plastic_phi
     experiment =  '_'.join([climate, '_'.join(['_'.join([k, str(v)]) for k, v in name_options.items()])])
