@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # Copyright (C) 2016 Andy Aschwanden
 
+import numpy as np
 import itertools
 from collections import OrderedDict
 import os
@@ -25,7 +26,7 @@ parser.add_argument("-q", '--queue', dest="queue", choices=list_queues(),
                     help='''queue. default=t1standard.''', default='normal')
 parser.add_argument("--climate", dest="climate",
                     choices=['elev', 'paleo', 'present'],
-                    help="Climate", default='paleo')
+                    help="Climate", default='present')
 parser.add_argument("-d", "--domain", dest="domain",
                     choices=['olympics', 'olympics_mtns'],
                     help="sets the modeling domain", default='olympics')
@@ -33,8 +34,8 @@ parser.add_argument("--start_year", dest="start", type=float,
                     help="Start year", default=0)
 parser.add_argument("--duration", dest="duration", type=float,
                     help="Duration", default=10)
-parser.add_argument("--exstep", dest="exstep",
-                    help="Spatial time series writing interval", default=1)
+parser.add_argument("--exstep", dest="exstep", type=float,
+                    help="Spatial time series writing interval", default=10)
 parser.add_argument("-f", "--o_format", dest="oformat",
                     choices=['netcdf3', 'netcdf4_parallel', 'pnetcdf'],
                     help="output format", default='netcdf3')
@@ -85,6 +86,9 @@ pism_dataname = 'pism_{domain}_{grid}m_v{version}.nc'.format(domain=domain.capit
                                                              version=bed_version)
 if not os.path.isdir(odir):
     os.mkdir(odir)
+odir_tmp = '_'.join([odir, 'tmp'])
+if not os.path.isdir(odir_tmp):
+    os.mkdir(odir_tmp)
 
 # Configuration File Setup
 pism_config = 'olympics_config'
@@ -121,6 +125,7 @@ combinations = list(itertools.product(sia_e_values, ppq_values, tefo_values, pla
 tsstep = 'yearly'
 
 scripts = []
+scripts_post = []
 
 for n, combination in enumerate(combinations):
 
@@ -189,7 +194,7 @@ for n, combination in enumerate(combinations):
 
         # Setup Climate Forcing
         climate_file = 'ltop_climate_olympics_{grid}m_kg_m-2_yr-1.nc'.format(grid=grid)
-        climate_params_dict = generate_climate(climate, atmosphere_given_file=climate_file, atmosphere_lapse_rate_file=climate_file)
+        climate_params_dict = generate_climate(climate, atmosphere_yearly_cycle_file=climate_file, atmosphere_lapse_rate_file=climate_file)
         # Setup Ocean Forcing
         ocean_params_dict = generate_ocean('null')
         # Setup Hydrology Model
@@ -197,7 +202,7 @@ for n, combination in enumerate(combinations):
 
         # Setup Scalar and Spatial Time Series Reporting
         exvars = default_spatial_ts_vars()
-        spatial_ts_dict = generate_spatial_ts(outfile, exvars, exstep, odir=odir)
+        spatial_ts_dict = generate_spatial_ts(outfile, exvars, exstep, odir=odir_tmp, split=True)
         scalar_ts_dict = generate_scalar_ts(outfile, tsstep, odir=odir)
 
         # Merge All Parameter Dictionaries
@@ -209,8 +214,28 @@ for n, combination in enumerate(combinations):
         f.write(cmd)
         f.write('\n')
 
+    script_post = 'cc_{}_g{}m_{}_post.sh'.format(domain.lower(), grid, experiment)
+    scripts_post.append(script_post)
+
+    post_header = make_batch_post_header(system)
+
+    with open(script_post, 'w') as f:
+
+        f.write(post_header)
+
+        extra_file = spatial_ts_dict['extra_file']
+        myfiles = ' '.join(['{}_{:.3f}.nc'.format(extra_file, k) for k in np.arange(start + exstep, end, exstep)])
+        myoutfile = extra_file + '.nc'
+        myoutfile = os.path.join(odir, os.path.split(myoutfile)[-1])
+        cmd = ' '.join(['ncrcat -O -4 -L 3 -h', myfiles, myoutfile, '\n'])
+        f.write(cmd)
+        cmd = ' '.join(['ncks -O -4 -L 3', os.path.join(odir, outfile), os.path.join(odir, outfile), '\n'])
+        f.write(cmd)
+
     
 scripts = uniquify_list(scripts)
-
+scripts_post = uniquify_list(scripts_post)
 print '\n'.join([script for script in scripts])
+print('\nwritten\n')
+print '\n'.join([script for script in scripts_post])
 print('\nwritten\n')

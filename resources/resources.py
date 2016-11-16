@@ -54,19 +54,26 @@ def default_spatial_ts_vars():
     Returns a list of commonly-used extra vars
     '''
     
-    exvars = ['air_temp',
+    exvars = ['air_temp_snapshot',
               'beta',
               'bmelt',
               'cell_area',
+              'climatic_mass_balance',
               'dHdt',
               'diffusivity',
+              'effective_air_temp',
+              'effective_precipitation',
               'ice_mass',
+              'ice_surface_temp',
               'mask',
               'lat',
               'lat_bnds',
               'lon',
               'lon_bnds',
               'precipitation',
+              'saccum',
+              'smelt',
+              'srunoff',
               'surface_mass_balance_average',
               'taub_mag',
               'tauc',
@@ -77,13 +84,8 @@ def default_spatial_ts_vars():
               'thk',
               'topg',
               'usurf',
-              'velbar',
-              'velbase',
               'velbase_mag',
-              'velsurf',
-              'velsurf_mag',
-              'wvelbase',
-              'wvelsurf']
+              'velsurf_mag']
     
     return exvars
 
@@ -360,24 +362,24 @@ def generate_climate(climate, **kwargs):
         params_dict['ice_surface_temp'] = '2,-15,0,2000'
         params_dict['climatic_mass_balance'] = '-3.,3,0,800,2500'
     elif climate in ('present'):
-        params_dict['atmosphere'] = 'given,lapse_rate'
-        if 'atmosphere_given_file' not in kwargs:
-            params_dict['atmosphere_given_file'] = 'olympics_climate_1000m.nc'
+        params_dict['atmosphere'] = 'yearly_cycle,lapse_rate'
+        if 'atmosphere_yearly_cycle_file' not in kwargs:
+            params_dict['atmosphere_yearly_cycle_file'] = 'olympics_climate_1000m.nc'
         else:
-            params_dict['atmosphere_given_file'] = kwargs['atmosphere_given_file']
-        params_dict['temp_lapse_rate'] = 6.5
+            params_dict['atmosphere_yearly_cycle_file'] = kwargs['atmosphere_yearly_cycle_file']
+        params_dict['temp_lapse_rate'] = 4.5
         if 'atmosphere_lapse_rate_file' not in kwargs:
             params_dict['atmosphere_lapse_rate_file'] = 'olympics_climate_1000m.nc'
         else:
             params_dict['atmosphere_lapse_rate_file'] = kwargs['atmosphere_lapse_rate_file']
         params_dict['surface'] = 'pdd'
     elif climate in ('paleo'):
-        params_dict['atmosphere'] = 'given,lapse_rate,delta_T,frac_P'
-        if 'atmosphere_given_file' not in kwargs:
-            params_dict['atmosphere_given_file'] = 'olympics_climate_1000m.nc'
+        params_dict['atmosphere'] = 'yearly_cycle,lapse_rate,delta_T,frac_P'
+        if 'atmosphere_yearly_cycle_file' not in kwargs:
+            params_dict['atmosphere_yearly_cycle_file'] = 'olympics_climate_1000m.nc'
         else:
-            params_dict['atmosphere_given_file'] = kwargs['atmosphere_given_file']
-        params_dict['temp_lapse_rate'] = 6.5
+            params_dict['atmosphere_yearly_cycle_file'] = kwargs['atmosphere_yearly_cycle_file']
+        params_dict['temp_lapse_rate'] = 4.5
         if 'atmosphere_lapse_rate_file' not in kwargs:
             params_dict['atmosphere_lapse_rate_file'] = 'olympics_climate_1000m.nc'
         else:
@@ -597,3 +599,36 @@ cd $PBS_O_WORKDIR
 """.format(queue=queue, walltime=walltime, nodes=nodes, ppn=ppn, cores=cores)
 
     return header, systems[system]
+
+
+def make_batch_post_header(system):
+
+    if system in ('pleiades', 'pleiades_ivy', 'pleiades_broadwell', 'pleiades_haswell'):
+
+        header = """#PBS -S /bin/bash
+#PBS -lselect=1:mem=94GB
+#PBS -lwalltime=8:00:00
+#PBS -q ldan
+
+module list
+
+cd $PBS_O_WORKDIR
+
+"""
+    elif system in ('chinook'):
+        header = """#!/bin/bash
+#PBS -q t2small
+#PBS -l walltime=12:00:00
+#PBS -l nodes=1:ppn=1
+#PBS -j oe
+
+module list
+
+cd $PBS_O_WORKDIR
+
+"""
+    else:
+        header = """#!/bin/bash
+
+"""
+    return header
