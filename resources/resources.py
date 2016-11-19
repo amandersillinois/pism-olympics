@@ -357,29 +357,37 @@ def generate_climate(climate, **kwargs):
     '''
     
     params_dict = OrderedDict()
+    ice_density = 910.
     if climate in ('elev'):
         params_dict['surface'] = 'elevation'
         params_dict['ice_surface_temp'] = '2,-15,0,2000'
         params_dict['climatic_mass_balance'] = '-3.,3,0,800,2500'
     elif climate in ('present'):
         params_dict['atmosphere'] = 'yearly_cycle,lapse_rate'
+        params_dict['surface.pdd.factor_ice'] = 3.04 / ice_density  # Shea et al (2009)
+        params_dict['surface.pdd.factor_snow'] = 4.45 / ice_density  # Shea et al (2009)
+        params_dict['surface.pdd.refreeze'] = 0
         if 'atmosphere_yearly_cycle_file' not in kwargs:
             params_dict['atmosphere_yearly_cycle_file'] = 'olympics_climate_1000m.nc'
         else:
             params_dict['atmosphere_yearly_cycle_file'] = kwargs['atmosphere_yearly_cycle_file']
-        params_dict['temp_lapse_rate'] = 4.5
+        params_dict['temp_lapse_rate'] = 5
         if 'atmosphere_lapse_rate_file' not in kwargs:
             params_dict['atmosphere_lapse_rate_file'] = 'olympics_climate_1000m.nc'
         else:
             params_dict['atmosphere_lapse_rate_file'] = kwargs['atmosphere_lapse_rate_file']
         params_dict['surface'] = 'pdd'
     elif climate in ('paleo'):
+        params_dict['atmosphere'] = 'yearly_cycle,lapse_rate'
+        params_dict['surface.pdd.factor_ice'] = 3.04 / ice_density  # Shea et al (2009)
+        params_dict['surface.pdd.factor_snow'] = 4.45 / ice_density  # Shea et al (2009)
+        params_dict['surface.pdd.refreeze'] = 0
         params_dict['atmosphere'] = 'yearly_cycle,lapse_rate,delta_T,frac_P'
         if 'atmosphere_yearly_cycle_file' not in kwargs:
             params_dict['atmosphere_yearly_cycle_file'] = 'olympics_climate_1000m.nc'
         else:
             params_dict['atmosphere_yearly_cycle_file'] = kwargs['atmosphere_yearly_cycle_file']
-        params_dict['temp_lapse_rate'] = 4.5
+        params_dict['temp_lapse_rate'] = 5
         if 'atmosphere_lapse_rate_file' not in kwargs:
             params_dict['atmosphere_lapse_rate_file'] = 'olympics_climate_1000m.nc'
         else:

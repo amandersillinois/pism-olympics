@@ -20,8 +20,8 @@ variables:
 		:Title = "Olympics Climate" ;
 data:
 
- frac_P = 0.4 ;
- delta_T = -4.5 ;
+ frac_P = 0.5 ;
+ delta_T = -6 ;
 
  time = 0 ;
  time_bnds = -1000000, 1000000 ;

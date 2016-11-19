@@ -48,7 +48,7 @@ parser.add_argument("--o_dir", dest="odir",
                     help="output directory. Default: current directory", default='test')
 parser.add_argument("--o_size", dest="osize",
                     choices=['small', 'medium', 'big', 'big_2d'],
-                    help="output size type", default='big_2d')
+                    help="output size type", default='medium')
 parser.add_argument("-s", "--system", dest="system",
                     choices=list_systems(),
                     help="computer system to use.", default='debug')
@@ -117,10 +117,13 @@ ssa_e = (1.0)
 
 # Model Parameters for Sensitivity Studay
 sia_e_values = [1.0, 3.0]
-ppq_values = [0.50]
+ppq_values = [0.25, 0.50]
 tefo_values = [0.020]
-plastic_phi_values = [20, 30]
-combinations = list(itertools.product(sia_e_values, ppq_values, tefo_values, plastic_phi_values))
+phi_min_values = [15]
+phi_max_values = [45]
+topg_min_values = [0]
+topg_max_values = [200]
+combinations = list(itertools.product(sia_e_values, ppq_values, tefo_values, phi_min_values, phi_max_values, topg_min_values, topg_max_values))
 
 tsstep = 'yearly'
 
@@ -129,12 +132,14 @@ scripts_post = []
 
 for n, combination in enumerate(combinations):
 
-    sia_e, ppq, tefo, plastic_phi = combination
+    sia_e, ppq, tefo, phi_min, phi_max, topg_min, topg_max = combination
+
+    ttphi = '{},{},{},{}'.format(phi_min, phi_max, topg_min, topg_max)
 
     name_options = OrderedDict()
     name_options['sb'] = stress_balance
     name_options['sia_e'] = sia_e
-    name_options['plastic_phi'] = plastic_phi
+    name_options['ppq'] = ppq
     experiment =  '_'.join([climate, '_'.join(['_'.join([k, str(v)]) for k, v in name_options.items()])])
 
         
@@ -187,7 +192,7 @@ for n, combination in enumerate(combinations):
         sb_params_dict['ssa_n'] = ssa_n
         sb_params_dict['pseudo_plastic_q'] = ppq
         sb_params_dict['till_effective_fraction_overburden'] = tefo
-        sb_params_dict['plastic_phi'] = plastic_phi
+        sb_params_dict['topg_to_phi'] = ttphi
         sb_params_dict['bed_smoother_range'] = 250.
 
         stress_balance_params_dict = generate_stress_balance(stress_balance, sb_params_dict)
@@ -227,9 +232,9 @@ for n, combination in enumerate(combinations):
         myfiles = ' '.join(['{}_{:.3f}.nc'.format(extra_file, k) for k in np.arange(start + exstep, end, exstep)])
         myoutfile = extra_file + '.nc'
         myoutfile = os.path.join(odir, os.path.split(myoutfile)[-1])
-        cmd = ' '.join(['ncrcat -O -4 -L 3 -h', myfiles, myoutfile, '\n'])
+        cmd = ' '.join(['ncrcat -O -6', myfiles, myoutfile, '\n'])
         f.write(cmd)
-        cmd = ' '.join(['ncks -O -4 -L 3', os.path.join(odir, outfile), os.path.join(odir, outfile), '\n'])
+        cmd = ' '.join(['ncks -O -6', os.path.join(odir, outfile), os.path.join(odir, outfile), '\n'])
         f.write(cmd)
 
     
