@@ -1,4 +1,4 @@
-netcdf pism_fSMB {
+netcdf paleo_modifier {
 dimensions:
 	time = 1 ;
 	tbnds = 2 ;
@@ -15,7 +15,7 @@ variables:
 		delta_T:units = "Kelvin" ;
 
 // global attributes:
-		:Conventions = "CF-1.3" ;
+		:Conventions = "CF-1.5" ;
 		:Creators = "Andy Aschwanden" ;
 		:Title = "Olympics Climate" ;
 data:

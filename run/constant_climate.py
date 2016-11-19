@@ -193,7 +193,6 @@ for n, combination in enumerate(combinations):
         sb_params_dict['pseudo_plastic_q'] = ppq
         sb_params_dict['till_effective_fraction_overburden'] = tefo
         sb_params_dict['topg_to_phi'] = ttphi
-        sb_params_dict['bed_smoother_range'] = 250.
 
         stress_balance_params_dict = generate_stress_balance(stress_balance, sb_params_dict)
 

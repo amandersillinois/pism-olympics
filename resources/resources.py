@@ -298,6 +298,7 @@ def generate_stress_balance(stress_balance, additional_params_dict):
         params_dict['sia_flow_law'] = 'gpbld3'
         params_dict['pseudo_plastic'] = ''
         params_dict['tauc_slippery_grounding_lines'] = ''
+        params_dict['bed_smoother_range'] = 50
 
     return merge_dicts(additional_params_dict, params_dict)
 
@@ -367,8 +368,8 @@ def generate_climate(climate, **kwargs):
         params_dict['climatic_mass_balance'] = '-3.,3,0,800,2500'
     elif climate in ('present'):
         params_dict['atmosphere'] = 'yearly_cycle,lapse_rate'
-        params_dict['surface.pdd.factor_ice'] = 3.04 / ice_density  # Shea et al (2009)
-        params_dict['surface.pdd.factor_snow'] = 4.45 / ice_density  # Shea et al (2009)
+        params_dict['surface.pdd.factor_ice'] = 4.59 / ice_density  # Shea et al (2009)
+        params_dict['surface.pdd.factor_snow'] = 3.04 / ice_density  # Shea et al (2009)
         params_dict['surface.pdd.refreeze'] = 0
         if 'atmosphere_yearly_cycle_file' not in kwargs:
             params_dict['atmosphere_yearly_cycle_file'] = 'olympics_climate_1000m.nc'
@@ -382,8 +383,8 @@ def generate_climate(climate, **kwargs):
         params_dict['surface'] = 'pdd'
     elif climate in ('paleo'):
         params_dict['atmosphere'] = 'yearly_cycle,lapse_rate'
-        params_dict['surface.pdd.factor_ice'] = 3.04 / ice_density  # Shea et al (2009)
-        params_dict['surface.pdd.factor_snow'] = 4.45 / ice_density  # Shea et al (2009)
+        params_dict['surface.pdd.factor_ice'] = 4.59 / ice_density  # Shea et al (2009)
+        params_dict['surface.pdd.factor_snow'] = 3.04 / ice_density  # Shea et al (2009)
         params_dict['surface.pdd.refreeze'] = 0
         params_dict['atmosphere'] = 'yearly_cycle,lapse_rate,delta_T,frac_P'
         if 'atmosphere_yearly_cycle_file' not in kwargs:
