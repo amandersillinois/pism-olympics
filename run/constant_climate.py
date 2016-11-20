@@ -123,7 +123,8 @@ phi_min_values = [15]
 phi_max_values = [45]
 topg_min_values = [0]
 topg_max_values = [200]
-combinations = list(itertools.product(sia_e_values, ppq_values, tefo_values, phi_min_values, phi_max_values, topg_min_values, topg_max_values))
+temp_lapse_rate_values = [4.5, 5.0, 5.5, 6.0]
+combinations = list(itertools.product(sia_e_values, ppq_values, tefo_values, phi_min_values, phi_max_values, topg_min_values, topg_max_values, temp_lapse_rate_values))
 
 tsstep = 'yearly'
 
@@ -132,7 +133,7 @@ scripts_post = []
 
 for n, combination in enumerate(combinations):
 
-    sia_e, ppq, tefo, phi_min, phi_max, topg_min, topg_max = combination
+    sia_e, ppq, tefo, phi_min, phi_max, topg_min, topg_max, temp_lapse_rate = combination
 
     ttphi = '{},{},{},{}'.format(phi_min, phi_max, topg_min, topg_max)
 
@@ -140,6 +141,7 @@ for n, combination in enumerate(combinations):
     name_options['sb'] = stress_balance
     name_options['sia_e'] = sia_e
     name_options['ppq'] = ppq
+    name_options['gamma'] = temp_lapse_rate
     experiment =  '_'.join([climate, '_'.join(['_'.join([k, str(v)]) for k, v in name_options.items()])])
 
         
@@ -198,7 +200,7 @@ for n, combination in enumerate(combinations):
 
         # Setup Climate Forcing
         climate_file = 'ltop_climate_olympics_{grid}m_kg_m-2_yr-1.nc'.format(grid=grid)
-        climate_params_dict = generate_climate(climate, atmosphere_yearly_cycle_file=climate_file, atmosphere_lapse_rate_file=climate_file)
+        climate_params_dict = generate_climate(climate, atmosphere_yearly_cycle_file=climate_file, atmosphere_lapse_rate_file=climate_file, temp_lapse_rate=temp_lapse_rate)
         # Setup Ocean Forcing
         ocean_params_dict = generate_ocean('null')
         # Setup Hydrology Model
@@ -212,8 +214,11 @@ for n, combination in enumerate(combinations):
         # Merge All Parameter Dictionaries
         all_params_dict = merge_dicts(general_params_dict, grid_params_dict, stress_balance_params_dict, climate_params_dict, ocean_params_dict, hydro_params_dict, spatial_ts_dict, scalar_ts_dict)
         all_params = ' '.join([' '.join(['-' + k, str(v)]) for k, v in all_params_dict.items()])
-        
-        cmd = ' '.join([batch_system['mpido'], prefix, all_params, '> {outdir}/job.${batch}  2>&1'.format(outdir=odir,batch=batch_system['job_id'])])
+
+        if system in ('debug'):
+            cmd = ' '.join([batch_system['mpido'], prefix, all_params, '2>&1 | tee {outdir}/job.${batch}'.format(outdir=odir,batch=batch_system['job_id'])])
+        else:
+            cmd = ' '.join([batch_system['mpido'], prefix, all_params, '> {outdir}/job.${batch}  2>&1'.format(outdir=odir,batch=batch_system['job_id'])])
 
         f.write(cmd)
         f.write('\n')

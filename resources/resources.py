@@ -375,7 +375,10 @@ def generate_climate(climate, **kwargs):
             params_dict['atmosphere_yearly_cycle_file'] = 'olympics_climate_1000m.nc'
         else:
             params_dict['atmosphere_yearly_cycle_file'] = kwargs['atmosphere_yearly_cycle_file']
-        params_dict['temp_lapse_rate'] = 5
+        if 'temp_lapse_rate' not in kwargs:
+            params_dict['temp_lapse_rate'] = 4.5
+        else:
+            params_dict['temp_lapse_rate'] = kwargs['temp_lapse_rate']
         if 'atmosphere_lapse_rate_file' not in kwargs:
             params_dict['atmosphere_lapse_rate_file'] = 'olympics_climate_1000m.nc'
         else:
@@ -391,7 +394,10 @@ def generate_climate(climate, **kwargs):
             params_dict['atmosphere_yearly_cycle_file'] = 'olympics_climate_1000m.nc'
         else:
             params_dict['atmosphere_yearly_cycle_file'] = kwargs['atmosphere_yearly_cycle_file']
-        params_dict['temp_lapse_rate'] = 5
+        if 'temp_lapse_rate' not in kwargs:
+            params_dict['temp_lapse_rate'] = 4.5
+        else:
+            params_dict['temp_lapse_rate'] = kwargs['temp_lapse_rate']
         if 'atmosphere_lapse_rate_file' not in kwargs:
             params_dict['atmosphere_lapse_rate_file'] = 'olympics_climate_1000m.nc'
         else:
