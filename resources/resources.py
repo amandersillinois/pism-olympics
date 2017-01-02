@@ -447,6 +447,7 @@ def list_systems():
     
     list = ['debug',
             'chinook',
+            'electra_broadwell',
             'fish',
             'pacman',
             'pleiades',
@@ -516,6 +517,13 @@ def make_batch_header(system, cores, walltime, queue):
                               't1small' : 24,
                               'debug' : 24}}
     mpido = 'mpiexec.hydra -n {cores}'.format(cores=cores)
+    systems['electra_broadwell'] = {'mpido' : mpido,
+                           'submit' : 'qsub',
+                           'work_dir' : 'PBS_O_WORKDIR',
+                           'job_id' : 'PBS_JOBID',
+                           'queue' : {
+                               'long' : 28,
+                               'normal': 28}}
     systems['pleiades'] = {'mpido' : mpido,
                            'submit' : 'qsub',
                            'work_dir' : 'PBS_O_WORKDIR',
@@ -588,6 +596,21 @@ module list
 cd $PBS_O_WORKDIR
 
 """.format(queue=queue, walltime=walltime, nodes=nodes, ppn=ppn, cores=cores)
+    elif system in ('electra_broadwell'):
+        
+        header = """#PBS -S /bin/bash
+#PBS -N cfd
+#PBS -l walltime={walltime}
+#PBS -m e
+#PBS -q {queue}
+#PBS -lselect={nodes}:ncpus={ppn}:mpiprocs={ppn}:model=bro_ele
+#PBS -j oe
+
+module list
+
+cd $PBS_O_WORKDIR
+
+""".format(queue=queue, walltime=walltime, nodes=nodes, ppn=ppn, cores=cores)
     elif system in ('pleiades_broadwell'):
         
         header = """#PBS -S /bin/bash
@@ -621,7 +644,7 @@ cd $PBS_O_WORKDIR
 
 def make_batch_post_header(system):
 
-    if system in ('pleiades', 'pleiades_ivy', 'pleiades_broadwell', 'pleiades_haswell'):
+    if system in ('electra_broadwell', 'pleiades', 'pleiades_ivy', 'pleiades_broadwell', 'pleiades_haswell'):
 
         header = """#PBS -S /bin/bash
 #PBS -lselect=1:mem=94GB
