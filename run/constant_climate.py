@@ -116,6 +116,7 @@ ssa_n = (3.0)
 ssa_e = (1.0)
 
 # Model Parameters for Sensitivity Studay
+dT_values = [-5, -4, -3]
 sia_e_values = [1.0, 3.0]
 ppq_values = [0.25, 0.50]
 tefo_values = [0.020]
@@ -124,7 +125,7 @@ phi_max_values = [45]
 topg_min_values = [0]
 topg_max_values = [200]
 temp_lapse_rate_values = [4.5, 5.0, 5.5, 6.0]
-combinations = list(itertools.product(sia_e_values, ppq_values, tefo_values, phi_min_values, phi_max_values, topg_min_values, topg_max_values, temp_lapse_rate_values))
+combinations = list(itertools.product(dT_values, sia_e_values, ppq_values, tefo_values, phi_min_values, phi_max_values, topg_min_values, topg_max_values, temp_lapse_rate_values))
 
 tsstep = 'yearly'
 
@@ -133,17 +134,20 @@ scripts_post = []
 
 for n, combination in enumerate(combinations):
 
-    sia_e, ppq, tefo, phi_min, phi_max, topg_min, topg_max, temp_lapse_rate = combination
+    dT, sia_e, ppq, tefo, phi_min, phi_max, topg_min, topg_max, temp_lapse_rate = combination
 
     ttphi = '{},{},{},{}'.format(phi_min, phi_max, topg_min, topg_max)
 
     name_options = OrderedDict()
     name_options['sb'] = stress_balance
     name_options['sia_e'] = sia_e
-    name_options['ppq'] = ppq
+    if stress_balance in ('ssa+sia'):
+        name_options['ppq'] = ppq
     name_options['gamma'] = temp_lapse_rate
+    name_options['dT'] = dT
     experiment =  '_'.join([climate, '_'.join(['_'.join([k, str(v)]) for k, v in name_options.items()])])
 
+    atmosphere_delta_T_file = 'paleo_modifier_{}K.nc'.format(dT)
         
     script = 'cc_{}_g{}m_{}.sh'.format(domain.lower(), grid, experiment)
     scripts.append(script)
@@ -200,7 +204,11 @@ for n, combination in enumerate(combinations):
 
         # Setup Climate Forcing
         climate_file = 'ltop_climate_olympics_{grid}m_kg_m-2_yr-1.nc'.format(grid=grid)
-        climate_params_dict = generate_climate(climate, atmosphere_yearly_cycle_file=climate_file, atmosphere_lapse_rate_file=climate_file, temp_lapse_rate=temp_lapse_rate)
+        climate_params_dict = generate_climate(climate,
+                                               atmosphere_yearly_cycle_file=climate_file,
+                                               atmosphere_lapse_rate_file=climate_file,
+                                               temp_lapse_rate=temp_lapse_rate,
+                                               atmosphere_delta_T_file=atmosphere_delta_T_file))
         # Setup Ocean Forcing
         ocean_params_dict = generate_ocean('null')
         # Setup Hydrology Model
@@ -236,9 +244,9 @@ for n, combination in enumerate(combinations):
         myfiles = ' '.join(['{}_{:.3f}.nc'.format(extra_file, k) for k in np.arange(start + exstep, end, exstep)])
         myoutfile = extra_file + '.nc'
         myoutfile = os.path.join(odir, os.path.split(myoutfile)[-1])
-        cmd = ' '.join(['ncrcat -O -6', myfiles, myoutfile, '\n'])
+        cmd = ' '.join(['ncrcat -O -6 -h', myfiles, myoutfile, '\n'])
         f.write(cmd)
-        cmd = ' '.join(['ncks -O -6', os.path.join(odir, outfile), os.path.join(odir, outfile), '\n'])
+        cmd = ' '.join(['ncks -O -4', os.path.join(odir, outfile), os.path.join(odir, outfile), '\n'])
         f.write(cmd)
 
     
