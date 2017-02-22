@@ -208,7 +208,7 @@ for n, combination in enumerate(combinations):
                                                atmosphere_yearly_cycle_file=climate_file,
                                                atmosphere_lapse_rate_file=climate_file,
                                                temp_lapse_rate=temp_lapse_rate,
-                                               atmosphere_delta_T_file=atmosphere_delta_T_file))
+                                               atmosphere_delta_T_file=atmosphere_delta_T_file)
         # Setup Ocean Forcing
         ocean_params_dict = generate_ocean('null')
         # Setup Hydrology Model
