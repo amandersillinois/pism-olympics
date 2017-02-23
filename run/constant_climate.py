@@ -147,7 +147,7 @@ for n, combination in enumerate(combinations):
     name_options['dT'] = dT
     experiment =  '_'.join([climate, '_'.join(['_'.join([k, str(v)]) for k, v in name_options.items()])])
 
-    atmosphere_delta_T_file = 'paleo_modifier_{}K.nc'.format(dT)
+    atmosphere_paleo_file = 'paleo_modifier_{}K.nc'.format(dT)
         
     script = 'cc_{}_g{}m_{}.sh'.format(domain.lower(), grid, experiment)
     scripts.append(script)
@@ -208,7 +208,8 @@ for n, combination in enumerate(combinations):
                                                atmosphere_yearly_cycle_file=climate_file,
                                                atmosphere_lapse_rate_file=climate_file,
                                                temp_lapse_rate=temp_lapse_rate,
-                                               atmosphere_delta_T_file=atmosphere_delta_T_file)
+                                               atmosphere_delta_T_file=atmosphere_paleo_file,
+                                               atmosphere_paleo_precip_file=atmosphere_paleo_file)
         # Setup Ocean Forcing
         ocean_params_dict = generate_ocean('null')
         # Setup Hydrology Model
