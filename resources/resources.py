@@ -405,10 +405,14 @@ def generate_climate(climate, **kwargs):
             params_dict['atmosphere_delta_T_file'] = 'paleo_modifier.nc'
         else:
             params_dict['atmosphere_delta_T_file'] = kwargs['atmosphere_delta_T_file']
-        if 'atmosphere_frac_P_file' not in kwargs:
-            params_dict['atmosphere_frac_P_file'] = 'paleo_modifier.nc'
+        if 'atmosphere_delta_T_file' not in kwargs:
+            params_dict['atmosphere_delta_T_file'] = 'paleo_modifier.nc'
         else:
-            params_dict['atmosphere_delta_T_file'] = kwargs['atmosphere_frac_P_file']
+            params_dict['atmosphere_delta_T_file'] = kwargs['atmosphere_delta_T_file']
+        if 'atmosphere_paleo_precip_file' not in kwargs:
+            params_dict['atmosphere_paleo_precip_file'] = 'paleo_modifier.nc'
+        else:
+            params_dict['atmosphere_paleo_precip_file'] = kwargs['atmosphere_paleo_precip_file']
         params_dict['surface'] = 'pdd'
     else:
         print('climate {} not recognized, exiting'.format(climate))
