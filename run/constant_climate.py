@@ -116,7 +116,8 @@ ssa_n = (3.0)
 ssa_e = (1.0)
 
 # Model Parameters for Sensitivity Studay
-dT_values = [-6, -5, -4, -3]
+precip_scale_factor_values = [5,  7] * 0.01
+dT_values = [-6, -5, -4]
 sia_e_values = [1.0, 3.0]
 ppq_values = [0.50]
 tefo_values = [0.020]
@@ -125,7 +126,7 @@ phi_max_values = [45]
 topg_min_values = [0]
 topg_max_values = [200]
 temp_lapse_rate_values = [5.0, 6.0]
-combinations = list(itertools.product(dT_values, sia_e_values, ppq_values, tefo_values, phi_min_values, phi_max_values, topg_min_values, topg_max_values, temp_lapse_rate_values))
+combinations = list(itertools.product(precip_scale_factor_values, dT_values, sia_e_values, ppq_values, tefo_values, phi_min_values, phi_max_values, topg_min_values, topg_max_values, temp_lapse_rate_values))
 
 tsstep = 'yearly'
 
@@ -134,7 +135,7 @@ scripts_post = []
 
 for n, combination in enumerate(combinations):
 
-    dT, sia_e, ppq, tefo, phi_min, phi_max, topg_min, topg_max, temp_lapse_rate = combination
+    precip_scale_factor, dT, sia_e, ppq, tefo, phi_min, phi_max, topg_min, topg_max, temp_lapse_rate = combination
 
     ttphi = '{},{},{},{}'.format(phi_min, phi_max, topg_min, topg_max)
 
@@ -207,6 +208,7 @@ for n, combination in enumerate(combinations):
         climate_params_dict = generate_climate(climate,
                                                atmosphere_yearly_cycle_file=climate_file,
                                                atmosphere_lapse_rate_file=climate_file,
+                                               atmosphere_precip_exponential_factor_for_temperature=precip_scale_factor,
                                                temp_lapse_rate=temp_lapse_rate,
                                                atmosphere_delta_T_file=atmosphere_paleo_file,
                                                atmosphere_paleo_precip_file=atmosphere_paleo_file)
