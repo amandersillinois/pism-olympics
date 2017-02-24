@@ -118,13 +118,13 @@ ssa_e = (1.0)
 # Model Parameters for Sensitivity Studay
 dT_values = [-5, -4, -3]
 sia_e_values = [1.0, 3.0]
-ppq_values = [0.25, 0.50]
+ppq_values = [0.50]
 tefo_values = [0.020]
 phi_min_values = [15]
 phi_max_values = [45]
 topg_min_values = [0]
 topg_max_values = [200]
-temp_lapse_rate_values = [4.5, 5.0, 5.5, 6.0]
+temp_lapse_rate_values = [5.0, 6.0]
 combinations = list(itertools.product(dT_values, sia_e_values, ppq_values, tefo_values, phi_min_values, phi_max_values, topg_min_values, topg_max_values, temp_lapse_rate_values))
 
 tsstep = 'yearly'
