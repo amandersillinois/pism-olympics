@@ -116,7 +116,7 @@ ssa_n = (3.0)
 ssa_e = (1.0)
 
 # Model Parameters for Sensitivity Studay
-precip_scale_factor_values = [5,  7] * 0.01
+precip_scale_factor_values = [0.05,  0.07]
 dT_values = [-6, -5, -4]
 sia_e_values = [1.0, 3.0]
 ppq_values = [0.50]
