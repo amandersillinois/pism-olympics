@@ -207,12 +207,12 @@ for n, combination in enumerate(combinations):
         # Setup Climate Forcing
         climate_file = 'ltop_climate_olympics_{grid}m_kg_m-2_yr-1.nc'.format(grid=grid)
         climate_params_dict = generate_climate(climate,
-                                               atmosphere_yearly_cycle_file=climate_file,
-                                               atmosphere_lapse_rate_file=climate_file,
-                                               atmosphere_precip_exponential_factor_for_temperature=precip_scale_factor,
-                                               temp_lapse_rate=temp_lapse_rate,
-                                               atmosphere_delta_T_file=atmosphere_paleo_file,
-                                               atmosphere_paleo_precip_file=atmosphere_paleo_file)
+                                               **{'atmosphere_yearly_cycle_file': climate_file,
+                                                  'atmosphere_lapse_rate_file': climate_file,
+                                                  'atmosphere.precip_exponential_factor_for_temperature': precip_scale_factor,
+                                                  'temp_lapse_rate': temp_lapse_rate,
+                                                  'atmosphere_delta_T_file': atmosphere_paleo_file,
+                                                  'atmosphere_paleo_precip_file': atmosphere_paleo_file)
         # Setup Ocean Forcing
         ocean_params_dict = generate_ocean('null')
         # Setup Hydrology Model
