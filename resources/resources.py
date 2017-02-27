@@ -414,13 +414,12 @@ def generate_climate(climate, **kwargs):
         else:
             params_dict['atmosphere_paleo_precip_file'] = kwargs['atmosphere_paleo_precip_file']
         params_dict['surface'] = 'pdd'
-        params_dict['atmosphere_precip_exponential_factor_for_temperature'] = kwargs['atmosphere_precip_exponential_factor_for_temperature']
     else:
         print('climate {} not recognized, exiting'.format(climate))
         import sys
         sys.exit(0)
         
-    return params_dict
+    return merge_dicts(params_dict, kwargs)
 
         
 def generate_ocean(ocean, **kwargs):
