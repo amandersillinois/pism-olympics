@@ -212,7 +212,7 @@ for n, combination in enumerate(combinations):
                                                   'atmosphere.precip_exponential_factor_for_temperature': precip_scale_factor,
                                                   'temp_lapse_rate': temp_lapse_rate,
                                                   'atmosphere_delta_T_file': atmosphere_paleo_file,
-                                                  'atmosphere_paleo_precip_file': atmosphere_paleo_file)
+                                                  'atmosphere_paleo_precip_file': atmosphere_paleo_file})
         # Setup Ocean Forcing
         ocean_params_dict = generate_ocean('null')
         # Setup Hydrology Model
