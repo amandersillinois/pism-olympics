@@ -35,7 +35,7 @@ parser.add_argument("--start_year", dest="start", type=float,
 parser.add_argument("--duration", dest="duration", type=float,
                     help="Duration", default=10)
 parser.add_argument("--exstep", dest="exstep", type=float,
-                    help="Spatial time series writing interval", default=10)
+                    help="Spatial time series writing interval", default=100)
 parser.add_argument("-f", "--o_format", dest="oformat",
                     choices=['netcdf3', 'netcdf4_parallel', 'pnetcdf'],
                     help="output format", default='netcdf3')
