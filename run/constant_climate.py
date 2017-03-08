@@ -219,13 +219,16 @@ for n, combination in enumerate(combinations):
         # Setup Hydrology Model
         hydro_params_dict = generate_hydrology(hydrology)
 
+        calving_params_dict = generate_calving('float_kill')
+
+
         # Setup Scalar and Spatial Time Series Reporting
         exvars = default_spatial_ts_vars()
         spatial_ts_dict = generate_spatial_ts(outfile, exvars, exstep, odir=odir_tmp, split=True)
         scalar_ts_dict = generate_scalar_ts(outfile, tsstep, odir=odir)
 
         # Merge All Parameter Dictionaries
-        all_params_dict = merge_dicts(general_params_dict, grid_params_dict, stress_balance_params_dict, climate_params_dict, ocean_params_dict, hydro_params_dict, spatial_ts_dict, scalar_ts_dict)
+        all_params_dict = merge_dicts(general_params_dict, grid_params_dict, stress_balance_params_dict, climate_params_dict, ocean_params_dict, hydro_params_dict, calving_params_dict, spatial_ts_dict, scalar_ts_dict)
         all_params = ' '.join([' '.join(['-' + k, str(v)]) for k, v in all_params_dict.items()])
 
         if system in ('debug'):
