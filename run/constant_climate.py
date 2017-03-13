@@ -127,7 +127,7 @@ phi_max_values = [45]
 topg_min_values = [0]
 topg_max_values = [200]
 temp_lapse_rate_values = [5.0, 6.0]
-combinations = list(itertools.product(wind_direction,
+combinations = list(itertools.product(wind_direction_values,
                                       precip_scale_factor_values,
                                       dT_values,
                                       sia_e_values,
