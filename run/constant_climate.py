@@ -116,6 +116,7 @@ ssa_n = (3.0)
 ssa_e = (1.0)
 
 # Model Parameters for Sensitivity Studay
+wind_direction_values = [230, 250, 270]
 precip_scale_factor_values = [0.05,  0.07]
 dT_values = [-6, -5, -4]
 sia_e_values = [1.0, 3.0]
@@ -126,7 +127,17 @@ phi_max_values = [45]
 topg_min_values = [0]
 topg_max_values = [200]
 temp_lapse_rate_values = [5.0, 6.0]
-combinations = list(itertools.product(precip_scale_factor_values, dT_values, sia_e_values, ppq_values, tefo_values, phi_min_values, phi_max_values, topg_min_values, topg_max_values, temp_lapse_rate_values))
+combinations = list(itertools.product(wind_direction,
+                                      precip_scale_factor_values,
+                                      dT_values,
+                                      sia_e_values,
+                                      ppq_values,
+                                      tefo_values,
+                                      phi_min_values,
+                                      phi_max_values,
+                                      topg_min_values,
+                                      topg_max_values,
+                                      temp_lapse_rate_values))
 
 tsstep = 'yearly'
 
@@ -147,6 +158,7 @@ for n, combination in enumerate(combinations):
     name_options['gamma'] = temp_lapse_rate
     name_options['dT'] = dT
     name_options['ps'] = precip_scale_factor
+    name_options['dir'] = wind_direction
     experiment =  '_'.join([climate, '_'.join(['_'.join([k, str(v)]) for k, v in name_options.items()])])
 
     atmosphere_paleo_file = 'paleo_modifier_{}K.nc'.format(dT)
@@ -206,7 +218,7 @@ for n, combination in enumerate(combinations):
         stress_balance_params_dict = generate_stress_balance(stress_balance, sb_params_dict)
 
         # Setup Climate Forcing
-        climate_file = 'ltop_climate_olympics_{grid}m_kg_m-2_yr-1.nc'.format(grid=grid)
+        climate_file = 'ltop_climate_olympics_{grid}m_dir_{dir}_kg_m-2_yr-1.nc'.format(grid=grid, dir=wind_direction)
         climate_params_dict = generate_climate(climate,
                                                **{'atmosphere_yearly_cycle_file': climate_file,
                                                   'atmosphere_lapse_rate_file': climate_file,
