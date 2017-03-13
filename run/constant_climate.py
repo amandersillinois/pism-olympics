@@ -146,7 +146,7 @@ scripts_post = []
 
 for n, combination in enumerate(combinations):
 
-    precip_scale_factor, dT, sia_e, ppq, tefo, phi_min, phi_max, topg_min, topg_max, temp_lapse_rate = combination
+    wind_direction, precip_scale_factor, dT, sia_e, ppq, tefo, phi_min, phi_max, topg_min, topg_max, temp_lapse_rate = combination
 
     ttphi = '{},{},{},{}'.format(phi_min, phi_max, topg_min, topg_max)
 
