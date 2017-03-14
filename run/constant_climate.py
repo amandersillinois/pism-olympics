@@ -84,8 +84,14 @@ input_file = options.input_file
 pism_dataname = 'pism_{domain}_{grid}m_v{version}.nc'.format(domain=domain.capitalize(),
                                                              grid=grid,
                                                              version=bed_version)
+state_dir = 'state'
+scalar_dir = 'scalar'
+spatial_dir = 'spatial'
 if not os.path.isdir(odir):
     os.mkdir(odir)
+for tsdir in (scalar_dir, spatial_dir, state_dir):
+    if not os.path.isdir(os.path.join(odir, tsdir)):
+        os.mkdir(os.path.join(odir, tsdir))
 odir_tmp = '_'.join([odir, 'tmp'])
 if not os.path.isdir(odir_tmp):
     os.mkdir(odir_tmp)
@@ -165,6 +171,9 @@ for n, combination in enumerate(combinations):
         
     script = 'cc_{}_g{}m_{}.sh'.format(domain.lower(), grid, experiment)
     scripts.append(script)
+    script_post = 'cc_{}_g{}m_{}_post.sh'.format(domain.lower(), grid, experiment)
+    scripts_post.append(script_post)
+
     
     for filename in (script):
         try:
@@ -195,7 +204,7 @@ for n, combination in enumerate(combinations):
             general_params_dict['i'] = input_file
         general_params_dict['ys'] = start
         general_params_dict['ye'] = end
-        general_params_dict['o'] = os.path.join(odir, outfile)
+        general_params_dict['o'] = os.path.join(odir, state_dir, outfile)
         general_params_dict['o_format'] = oformat
         general_params_dict['o_size'] = osize
         general_params_dict['config_override'] = pism_config_nc
@@ -237,22 +246,24 @@ for n, combination in enumerate(combinations):
         # Setup Scalar and Spatial Time Series Reporting
         exvars = default_spatial_ts_vars()
         spatial_ts_dict = generate_spatial_ts(outfile, exvars, exstep, odir=odir_tmp, split=True)
-        scalar_ts_dict = generate_scalar_ts(outfile, tsstep, odir=odir)
+        scalar_ts_dict = generate_scalar_ts(outfile, tsstep, odir=os.path.join(odir, scalar_dir))
 
         # Merge All Parameter Dictionaries
         all_params_dict = merge_dicts(general_params_dict, grid_params_dict, stress_balance_params_dict, climate_params_dict, ocean_params_dict, hydro_params_dict, calving_params_dict, spatial_ts_dict, scalar_ts_dict)
         all_params = ' '.join([' '.join(['-' + k, str(v)]) for k, v in all_params_dict.items()])
 
         if system in ('debug'):
-            cmd = ' '.join([batch_system['mpido'], prefix, all_params, '2>&1 | tee {outdir}/job.${batch}'.format(outdir=odir,batch=batch_system['job_id'])])
+            cmd = ' '.join([batch_system['mpido'], prefix, all_params, '2>&1 | tee {outdir}/job.${batch}'.format(outdir=odir,
+                                                                                                                 batch=batch_system['job_id'])])
         else:
-            cmd = ' '.join([batch_system['mpido'], prefix, all_params, '> {outdir}/job.${batch}  2>&1'.format(outdir=odir,batch=batch_system['job_id'])])
+            cmd = ' '.join([batch_system['mpido'], prefix, all_params, '> {outdir}/job.${batch}  2>&1'.format(outdir=odir,
+                                                                                                              batch=batch_system['job_id'])])
 
         f.write(cmd)
         f.write('\n')
-
-    script_post = 'cc_{}_g{}m_{}_post.sh'.format(domain.lower(), grid, experiment)
-    scripts_post.append(script_post)
+        f.write('\n')
+        f.write('{} {}\n'.format(batch_system['submit'], script_post))
+        f.write('\n')
 
     post_header = make_batch_post_header(system)
 
