@@ -474,9 +474,8 @@ def list_queues():
             'long',
             'standard',
             'standard_16',
-            't1standard',
             't2standard',
-            't1small']
+            't2small']
     
     return list
 
