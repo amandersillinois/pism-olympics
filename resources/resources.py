@@ -454,6 +454,7 @@ def list_systems():
             'fish',
             'pacman',
             'pleiades',
+            'pleiades_haswell',
             'pleiades_ivy',
             'pleiades_broadwell']
     
@@ -532,6 +533,13 @@ def make_batch_header(system, cores, walltime, queue):
                            'queue' : {
                                'long' : 20,
                                'normal': 20}}
+    systems['pleiades_haswell'] = {'mpido' : mpido,
+                           'submit' : 'qsub',
+                           'work_dir' : 'PBS_O_WORKDIR',
+                           'job_id' : 'PBS_JOBID',
+                           'queue' : {
+                               'long' : 24,
+                               'normal': 24}}
     systems['pleiades_ivy'] = {'mpido' : mpido,
                            'submit' : 'qsub',
                            'work_dir' : 'PBS_O_WORKDIR',
@@ -620,6 +628,21 @@ cd $PBS_O_WORKDIR
 #PBS -m e
 #PBS -q {queue}
 #PBS -lselect={nodes}:ncpus={ppn}:mpiprocs={ppn}:model=bro
+#PBS -j oe
+
+module list
+
+cd $PBS_O_WORKDIR
+
+""".format(queue=queue, walltime=walltime, nodes=nodes, ppn=ppn, cores=cores)
+    elif system in ('pleiades_haswell'):
+        
+        header = """#PBS -S /bin/bash
+#PBS -N cfd
+#PBS -l walltime={walltime}
+#PBS -m e
+#PBS -q {queue}
+#PBS -lselect={nodes}:ncpus={ppn}:mpiprocs={ppn}:model=has
 #PBS -j oe
 
 module list
