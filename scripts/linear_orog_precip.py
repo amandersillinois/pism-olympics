@@ -33,6 +33,7 @@ class OrographicPrecipitation(object):
         self.nx = len(Orography[1, :])
         self.ny = len(Orography)
         self.truncate = truncate
+        self.tomass = tomass
 
         self.P = self._compute_precip(ounits)
         if ounits is not None:
@@ -156,13 +157,14 @@ class OrographicPrecipitation(object):
         P_scale = physical_constants['P_scale']
         logger.info('Scale precipitation P = P * {}'.format(P_scale))
         P *= P_scale
+        P1 = physical_constants['P1']
         P += P1
 
         if ounits is not None:
             import cf_units
             in_units = cf_units.Unit('mm hr-1')
             out_units = cf_units.Unit(ounits)
-            if tomass:
+            if self.tomass:
                 water_density = 1000.
                 logger.info('Converting mm hr-1 to {} using density {}'.format(ounits, water_density))
                 in_units *=  (cf_units.Unit('kg m-3') * water_density)
@@ -368,6 +370,7 @@ if __name__ == "__main__":
     # y-component of wind vector [m s-1]
     physical_constants['v'] = np.cos(direction * 2 * np.pi / 360) * magnitude
     physical_constants['P0'] = P0   # background precip [mm hr-1]
+    physical_constants['P1'] = P1   # background precip [out units]
     physical_constants['P_scale'] = P_scale   # precip scale factor [1]
 
     OP = OrographicPrecipitation(

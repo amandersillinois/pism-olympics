@@ -156,12 +156,13 @@ if __name__ == "__main__":
     Hw_values = [3200]
     magnitude_values = [15, 20]
     direction_values = [248]
-    background_precip_values = [0, 10]  # mm hr-1
+    background_precip_values_0 = [0, 10]  # mm hr-1
+    background_precip_values_1 = [0.114]  # mm hr-1 or ???
 
     if shp_file is not None:
         stations = read_shapefile(shp_file)
         
-    combinations = list(itertools.product(tau_c_values, tau_f_values, Nm_values, Hw_values, magnitude_values, direction_values, background_precip_values))
+    combinations = list(itertools.product(tau_c_values, tau_f_values, Nm_values, Hw_values, magnitude_values, direction_values, background_precip_values_0, background_precip_values_1))
     n_exp = len(combinations)
     st_data = dict()
     with open(csv_file, 'w') as f:
@@ -176,7 +177,7 @@ if __name__ == "__main__":
                            + ['p_exp_units'])
         for exp_no, combination in enumerate(combinations):
 
-            tau_c, tau_f, Nm, Hw, magnitude, direction, P0 = combination
+            tau_c, tau_f, Nm, Hw, magnitude, direction, P0, P1 = combination
             out_name = '_'.join(['ltop_olymics_precip', ounits.replace(' ', '_'), 'tauc', str(tau_c), 'tauf', str(tau_f), 'Nm', str(Nm), 'Hw', str(Hw), 'mag', str(magnitude), 'dir', str(direction), 'p0', str(P0)])
             print('Running exp {} {}'.format(exp_no, out_name))
 
@@ -194,6 +195,7 @@ if __name__ == "__main__":
             # y-component of wind vector [m s-1]
             physical_constants['v'] = np.cos(direction * 2 * np.pi / 360) * magnitude
             physical_constants['P0'] = P0   # background precip [mm hr-1]
+            physical_constants['P1'] = P1   # background precip [mm hr-1]
             physical_constants['P_scale'] = P_scale   # precip scale factor [1]
 
             OP = OrographicPrecipitation(
