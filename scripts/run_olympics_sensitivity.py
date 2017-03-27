@@ -150,8 +150,7 @@ if __name__ == "__main__":
     rho_Sref = 7.4e-3  # kg m-3
     gamma = -5.8       # K / km
 
-    tau_c_values = [1000]
-    tau_f_values = [1000]
+    tau_values = [1000]
     Nm_values = [0.005]
     Hw_values = [3200]
     magnitude_values = [15, 20]
@@ -162,7 +161,7 @@ if __name__ == "__main__":
     if shp_file is not None:
         stations = read_shapefile(shp_file)
         
-    combinations = list(itertools.product(tau_c_values, tau_f_values, Nm_values, Hw_values, magnitude_values, direction_values, background_precip_values_0, background_precip_values_1))
+    combinations = list(itertools.product(tau_values, Nm_values, Hw_values, magnitude_values, direction_values, background_precip_values_0, background_precip_values_1))
     n_exp = len(combinations)
     st_data = dict()
     with open(csv_file, 'w') as f:
@@ -177,13 +176,13 @@ if __name__ == "__main__":
                            + ['p_exp_units'])
         for exp_no, combination in enumerate(combinations):
 
-            tau_c, tau_f, Nm, Hw, magnitude, direction, P0, P1 = combination
-            out_name = '_'.join(['ltop_olymics_precip', ounits.replace(' ', '_'), 'tauc', str(tau_c), 'tauf', str(tau_f), 'Nm', str(Nm), 'Hw', str(Hw), 'mag', str(magnitude), 'dir', str(direction), 'p0', str(P0)])
+            tau, Nm, Hw, magnitude, direction, P0, P1 = combination
+            out_name = '_'.join(['ltop_olymics_precip', ounits.replace(' ', '_'), 'tau', str(tau), 'Nm', str(Nm), 'Hw', str(Hw), 'mag', str(magnitude), 'dir', str(direction), 'p0', str(P0)])
             print('Running exp {} {}'.format(exp_no, out_name))
 
             physical_constants = dict()
-            physical_constants['tau_c'] = tau_c      # conversion time [s]
-            physical_constants['tau_f'] = tau_f      # fallout time [s]
+            physical_constants['tau_c'] = tau  # conversion time [s]
+            physical_constants['tau_f'] = tau  # fallout time [s]
             physical_constants['f'] = 2 * 7.2921e-5 * \
                 np.sin(lat * np.pi / 180)  # Coriolis force
             physical_constants['Nm'] = Nm   # moist stability frequency [s-1]
