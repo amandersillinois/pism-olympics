@@ -114,14 +114,14 @@ if __name__ == "__main__":
     rho_Sref = 7.4e-3  # kg m-3
     gamma = -5.8       # K / km
 
-    tau_values = [1000]
-    Nm_values = [0.005]
-    Hw_values = [3200]
-    magnitude_values = [15, 20]
-    direction_values = [248]
-    precip_scale_factor_values = [1]
-    background_precip_values_0 = [0, 10]  # mm hr-1
-    background_precip_values_1 = [0.114]  # mm hr-1 or ???
+    tau_values = [1750]
+    Nm_values = [0.007]
+    Hw_values = [2600]
+    magnitude_values = [15]
+    direction_values = [220 ]
+    precip_scale_factor_values = [ 0.09, 0.11, 0.125]
+    background_precip_values_0 = [1]  # mm hr-1
+    background_precip_values_1 = [0.057, 0.114]   
 
     if shp_file is not None:
         stations = read_shapefile(shp_file)
