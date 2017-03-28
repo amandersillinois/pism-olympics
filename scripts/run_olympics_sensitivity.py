@@ -97,49 +97,13 @@ if __name__ == "__main__":
                         help='Gdal-readable DEM', default=None)
     parser.add_argument('-g', '--shape_file', dest='shp_file',
                         help='Point shape file with rain gauges', default=None)
-    parser.add_argument(
-        '--background_precip',
-        dest='P0',
-        type=float,
-        help='Background precipitation rate [mm hr-1].',
-        default=0.)
-    parser.add_argument('--precip_scale_factor', dest='P_scale', type=float,
-                        help='Precipitation scale factor.', default=1.)
-    parser.add_argument('--no_trunc', dest='truncate', action='store_false',
-                        help='Do not truncate precipitation.', default=True)
-    parser.add_argument('--latitude', dest='lat', type=float,
-                        help='Latitude to compute Coriolis term.', default=45.)
-    parser.add_argument('--tau_c', dest='tau_c', type=float,
-                        help='conversion time [s].', default=1000)
-    parser.add_argument('--tau_f', dest='tau_f', type=float,
-                        help='fallout time [s].', default=1000)
-    parser.add_argument('--moist_stability', dest='Nm', type=float,
-                        help='moist stability frequency [s-1].', default=0.005)
-    parser.add_argument('--vapor_scale_height', dest='Hw', type=float,
-                        help='Water vapor scale height [m].', default=2500)
-    parser.add_argument(
-        '--wind_direction',
-        dest='direction',
-        type=float,
-        help='Direction from which the wind is coming.',
-        default=270)
-    parser.add_argument('--wind_magnitude', dest='magnitude', type=float,
-                        help='Magnitude of wind velocity [m/s].', default=15)
 
     options = parser.parse_args()
     in_file = options.in_file
     shp_file = options.shp_file
     csv_file = options.csv_file
-    direction = options.direction
-    lat = options.lat
-    magnitude = options.magnitude
-    tau_c = options.tau_c
-    tau_f = options.tau_f
-    truncate = options.truncate
-    Nm = options.Nm
-    Hw = options.Hw
-    P0 = options.P0
-    P_scale = options.P_scale
+    lat = 0.
+    truncate = True
     ounits = 'm yr-1'
     gd = ReadRaster(in_file)
     X = gd.X
@@ -150,18 +114,19 @@ if __name__ == "__main__":
     rho_Sref = 7.4e-3  # kg m-3
     gamma = -5.8       # K / km
 
-    tau_c_values = [1000]
-    tau_f_values = [1000]
+    tau_values = [1000]
     Nm_values = [0.005]
     Hw_values = [3200]
     magnitude_values = [15, 20]
     direction_values = [248]
-    background_precip_values = [0, 10]  # mm hr-1
+    precip_scale_factor_values = [1]
+    background_precip_values_0 = [0, 10]  # mm hr-1
+    background_precip_values_1 = [0.114]  # mm hr-1 or ???
 
     if shp_file is not None:
         stations = read_shapefile(shp_file)
         
-    combinations = list(itertools.product(tau_c_values, tau_f_values, Nm_values, Hw_values, magnitude_values, direction_values, background_precip_values))
+    combinations = list(itertools.product(tau_values, Nm_values, Hw_values, magnitude_values, direction_values, precip_scale_factor_values, background_precip_values_0, background_precip_values_1))
     n_exp = len(combinations)
     st_data = dict()
     with open(csv_file, 'w') as f:
@@ -176,13 +141,13 @@ if __name__ == "__main__":
                            + ['p_exp_units'])
         for exp_no, combination in enumerate(combinations):
 
-            tau_c, tau_f, Nm, Hw, magnitude, direction, P0 = combination
-            out_name = '_'.join(['ltop_olymics_precip', ounits.replace(' ', '_'), 'tauc', str(tau_c), 'tauf', str(tau_f), 'Nm', str(Nm), 'Hw', str(Hw), 'mag', str(magnitude), 'dir', str(direction), 'p0', str(P0)])
+            tau, Nm, Hw, magnitude, direction, P_scale, P0, P1 = combination
+            out_name = '_'.join(['ltop_olymics_precip', ounits.replace(' ', '_'), 'tau', str(tau), 'Nm', str(Nm), 'Hw', str(Hw), 'mag', str(magnitude), 'dir', str(direction), 'ps', str(P_scale), 'p0', str(P0), 'p1', str(P1)])
             print('Running exp {} {}'.format(exp_no, out_name))
 
             physical_constants = dict()
-            physical_constants['tau_c'] = tau_c      # conversion time [s]
-            physical_constants['tau_f'] = tau_f      # fallout time [s]
+            physical_constants['tau_c'] = tau  # conversion time [s]
+            physical_constants['tau_f'] = tau  # fallout time [s]
             physical_constants['f'] = 2 * 7.2921e-5 * \
                 np.sin(lat * np.pi / 180)  # Coriolis force
             physical_constants['Nm'] = Nm   # moist stability frequency [s-1]
@@ -194,6 +159,7 @@ if __name__ == "__main__":
             # y-component of wind vector [m s-1]
             physical_constants['v'] = np.cos(direction * 2 * np.pi / 360) * magnitude
             physical_constants['P0'] = P0   # background precip [mm hr-1]
+            physical_constants['P1'] = P1   # background precip [mm hr-1]
             physical_constants['P_scale'] = P_scale   # precip scale factor [1]
 
             OP = OrographicPrecipitation(
