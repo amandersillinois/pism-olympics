@@ -294,7 +294,7 @@ def generate_stress_balance(stress_balance, additional_params_dict):
         params_dict['options_left'] = ''
         # params_dict['ssafd_pc_type'] = 'asm'
         # params_dict['ssafd_sub_pc_type'] = 'jacobi'
-        params_dict['cfbc'] = ''
+        # params_dict['cfbc'] = ''
         params_dict['sia_flow_law'] = 'gpbld3'
         params_dict['pseudo_plastic'] = ''
         params_dict['tauc_slippery_grounding_lines'] = ''
