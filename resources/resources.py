@@ -292,12 +292,9 @@ def generate_stress_balance(stress_balance, additional_params_dict):
     params_dict['stress_balance'] = stress_balance
     if stress_balance in ('ssa+sia'):
         params_dict['options_left'] = ''
-        # params_dict['ssafd_pc_type'] = 'asm'
-        # params_dict['ssafd_sub_pc_type'] = 'jacobi'
         # params_dict['cfbc'] = ''
         params_dict['sia_flow_law'] = 'gpbld3'
         params_dict['pseudo_plastic'] = ''
-        params_dict['tauc_slippery_grounding_lines'] = ''
         params_dict['bed_smoother_range'] = 50
 
     return merge_dicts(additional_params_dict, params_dict)
