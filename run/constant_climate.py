@@ -123,9 +123,9 @@ ssa_e = (1.0)
 
 # Model Parameters for Sensitivity Studay
 wind_direction_values = [220]
-precip_scale_factor_values = [0.05,  0.07]
+precip_scale_factor_values = [0.05, 0.07]
 dT_values = [-6, -5, -4]
-sia_e_values = [1.0, 3.0]
+sia_e_values = [3.0]
 ppq_values = [0.50]
 tefo_values = [0.020]
 phi_min_values = [15]
@@ -158,13 +158,9 @@ for n, combination in enumerate(combinations):
 
     name_options = OrderedDict()
     name_options['sb'] = stress_balance
-    name_options['sia_e'] = sia_e
-    if stress_balance in ('ssa+sia'):
-        name_options['ppq'] = ppq
     name_options['gamma'] = temp_lapse_rate
     name_options['dT'] = dT
     name_options['ps'] = precip_scale_factor
-    name_options['dir'] = wind_direction
     experiment =  '_'.join([climate, '_'.join(['_'.join([k, str(v)]) for k, v in name_options.items()])])
 
     atmosphere_paleo_file = 'paleo_modifier_{}K.nc'.format(dT)
