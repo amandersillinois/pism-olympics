@@ -361,7 +361,7 @@ def generate_climate(climate, **kwargs):
     ice_density = 910.
     if climate in ('elev'):
         params_dict['surface'] = 'elevation'
-        params_dict['ice_surface_temp'] = '2,-15,0,2000'
+        params_dict['ice_surface_temp'] = '0,0,-100,5000'
         params_dict['climatic_mass_balance'] = '-3.,3,0,800,2500'
     elif climate in ('present'):
         params_dict['atmosphere'] = 'yearly_cycle,lapse_rate'
