@@ -449,6 +449,7 @@ def list_systems():
             'chinook',
             'electra_broadwell',
             'fish',
+            'keeling',
             'pacman',
             'pleiades',
             'pleiades_haswell',
@@ -515,6 +516,14 @@ def make_batch_header(system, cores, walltime, queue):
                               't2standard' : 24,
                               't2small' : 24,
                               'debug' : 24}}
+    systems['keeling'] = {'mpido' : mpido,
+                          'submit' : 'sbatch',
+                          'work_dir' : 'SLURM_SUBMIT_DIR',
+                          'job_id' : 'SLURM_JOBID',
+                          'queue' : {
+                              't2standard' : 24,  ## FIXME
+                              't2small' : 24,   
+                              'debug' : 24}}
     mpido = 'mpiexec -n {cores}'.format(cores=cores)
     systems['electra_broadwell'] = {'mpido' : mpido,
                            'submit' : 'qsub',
@@ -565,6 +574,29 @@ def make_batch_header(system, cores, walltime, queue):
         header = ''
         
     elif system in ('chinook'):
+        
+        header = """#!/bin/sh
+#SBATCH --partition={queue}
+#SBATCH --ntasks={cores}
+#SBATCH --tasks-per-node={ppn}
+#SBATCH --time={walltime}
+#SBATCH --mail-user=aaschwanden@alaska.edu
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=END
+#SBATCH --mail-type=FAIL
+#SBATCH --output=pism.%j
+
+module list
+
+cd $SLURM_SUBMIT_DIR
+
+# Generate a list of compute node hostnames reserved for this job,
+# this ./nodes file is necessary for slurm to spawn mpi processes
+# across multiple compute nodes
+srun -l /bin/hostname | sort -n | awk \'{{print $2}}\' > ./nodes_$SLURM_JOBID
+
+""".format(queue=queue, walltime=walltime, nodes=nodes, ppn=ppn, cores=cores)
+    elif system in ('keeling'):  ## FIXME
         
         header = """#!/bin/sh
 #SBATCH --partition={queue}

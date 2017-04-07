@@ -122,6 +122,7 @@ ssa_n = (3.0)
 ssa_e = (1.0)
 
 # Model Parameters for Sensitivity Study
+ela_values = [1000, 1500, 2000]
 sia_e_values = [3.0]
 ppq_values = [0.50]
 tefo_values = [0.020]
@@ -130,15 +131,14 @@ phi_max_values = [45]
 topg_min_values = [0]
 topg_max_values = [200]
 temp_lapse_rate_values = [5.0, 6.0]
-combinations = list(itertools.product(
+combinations = list(itertools.product(ela_values,
                                       sia_e_values,
                                       ppq_values,
                                       tefo_values,
                                       phi_min_values,
                                       phi_max_values,
                                       topg_min_values,
-                                      topg_max_values,
-                                      temp_lapse_rate_values))
+                                      topg_max_values))
 
 tsstep = 'yearly'
 
@@ -147,12 +147,13 @@ scripts_post = []
 
 for n, combination in enumerate(combinations):
 
-    sia_e, ppq, tefo, phi_min, phi_max, topg_min, topg_max, temp_lapse_rate = combination
+    ela, sia_e, ppq, tefo, phi_min, phi_max, topg_min, topg_max = combination
 
     ttphi = '{},{},{},{}'.format(phi_min, phi_max, topg_min, topg_max)
 
     name_options = OrderedDict()
     name_options['sb'] = stress_balance
+    name_options['ela'] = ela
     experiment =  '_'.join([climate, '_'.join(['_'.join([k, str(v)]) for k, v in name_options.items()])])
 
     script = 'cc_{}_g{}m_{}.sh'.format(domain.lower(), grid, experiment)
@@ -215,7 +216,7 @@ for n, combination in enumerate(combinations):
         # Setup Climate Forcing
         climate_params_dict = generate_climate(climate,
                                                ice_surface_temp='0,0,-100,5000',
-                                               climatic_mass_balance='-3.,3,0,800,2500')
+                                               climatic_mass_balance='-3.,3,0,{},2500'.format(ela))
         
         # Setup Ocean Forcing
         ocean_params_dict = generate_ocean('null')
