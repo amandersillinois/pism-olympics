@@ -1,4 +1,5 @@
-#!/usr/bin/env python# Copyright (C) 2016 Andy Aschwanden
+#!/usr/bin/env python
+# Copyright (C) 2016 Andy Aschwanden
 
 import numpy as np
 import itertools
