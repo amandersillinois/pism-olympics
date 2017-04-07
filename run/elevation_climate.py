@@ -26,7 +26,7 @@ parser.add_argument("-q", '--queue', dest="queue", choices=list_queues(),
                     help='''queue. default=t1standard.''', default='normal')
 parser.add_argument("--climate", dest="climate",
                     choices=['elev', 'paleo', 'present'],
-                    help="Climate", default='present')
+                    help="Climate", default='elev')
 parser.add_argument("-d", "--domain", dest="domain",
                     choices=['olympics', 'olympics_mtns'],
                     help="sets the modeling domain", default='olympics')
@@ -121,10 +121,7 @@ hydrology = 'diffuse'
 ssa_n = (3.0)
 ssa_e = (1.0)
 
-# Model Parameters for Sensitivity Studay
-wind_direction_values = [220]
-precip_scale_factor_values = [0.05, 0.07]
-dT_values = [-6, -5, -4]
+# Model Parameters for Sensitivity Study
 sia_e_values = [3.0]
 ppq_values = [0.50]
 tefo_values = [0.020]
@@ -133,9 +130,7 @@ phi_max_values = [45]
 topg_min_values = [0]
 topg_max_values = [200]
 temp_lapse_rate_values = [5.0, 6.0]
-combinations = list(itertools.product(wind_direction_values,
-                                      precip_scale_factor_values,
-                                      dT_values,
+combinations = list(itertools.product(
                                       sia_e_values,
                                       ppq_values,
                                       tefo_values,
@@ -223,14 +218,10 @@ for n, combination in enumerate(combinations):
         stress_balance_params_dict = generate_stress_balance(stress_balance, sb_params_dict)
 
         # Setup Climate Forcing
-        climate_file = '../data_sets/climate_forcing/ltop_climate_olympics_{grid}m_dir_{dir}_kg_m-2_yr-1.nc'.format(grid=grid, dir=wind_direction)
         climate_params_dict = generate_climate(climate,
-                                               **{'atmosphere_yearly_cycle_file': climate_file,
-                                                  'atmosphere_lapse_rate_file': climate_file,
-                                                  'atmosphere.precip_exponential_factor_for_temperature': precip_scale_factor,
-                                                  'temp_lapse_rate': temp_lapse_rate,
-                                                  'atmosphere_delta_T_file': atmosphere_paleo_file,
-                                                  'atmosphere_paleo_precip_file': atmosphere_paleo_file})
+                                               ice_surface_temp = '0,0,-100,5000',
+                                               climatic_mass_balance = '-3.,3,0,800,2500')
+        
         # Setup Ocean Forcing
         ocean_params_dict = generate_ocean('null')
         # Setup Hydrology Model
