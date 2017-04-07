@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# Copyright (C) 2016 Andy Aschwanden
+#!/usr/bin/env python# Copyright (C) 2016 Andy Aschwanden
 
 import numpy as np
 import itertools
@@ -128,10 +127,10 @@ dT_values = [-6, -5, -4]
 sia_e_values = [3.0]
 ppq_values = [0.50]
 tefo_values = [0.020]
-phi_min_values = [15]
-phi_max_values = [45]
-topg_min_values = [0]
-topg_max_values = [200]
+phi_min_values = [15, 25, 35, 45]
+phi_max_values = phi_min_values
+topg_min_values = [-2000]
+topg_max_values = [4000]
 temp_lapse_rate_values = [5.0, 6.0]
 combinations = list(itertools.product(wind_direction_values,
                                       precip_scale_factor_values,

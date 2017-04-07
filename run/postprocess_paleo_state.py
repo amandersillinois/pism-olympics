@@ -59,7 +59,7 @@ for dir_processed in (dir_gtiff, dir_nc):
     if not os.path.isdir(os.path.join(idir, dir_processed)):
         os.mkdir(os.path.join(idir, dir_processed))
 
-pvars = ('thk', 'usurf', 'velsurf_mag')
+pvars = ('thk', 'usurf', 'velsurf_mag', 'velbase_mag')
 fill_value = -2e9
 v_str = ' '.join('='.join([x, str(fill_value) + ';']) for x in pvars)
 ncap2_str = 'where(thk<10) {{ {} }};'.format(v_str)
