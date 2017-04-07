@@ -158,8 +158,8 @@ for n, combination in enumerate(combinations):
 
     name_options = OrderedDict()
     name_options['sb'] = stress_balance
-    name_options['gamma'] = temp_lapse_rate
     name_options['phi'] = phi_min
+    name_options['gamma'] = temp_lapse_rate
     name_options['dT'] = dT
     name_options['ps'] = precip_scale_factor
     experiment =  '_'.join([climate, '_'.join(['_'.join([k, str(v)]) for k, v in name_options.items()])])
