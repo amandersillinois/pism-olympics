@@ -147,18 +147,13 @@ scripts_post = []
 
 for n, combination in enumerate(combinations):
 
-    wind_direction, precip_scale_factor, dT, sia_e, ppq, tefo, phi_min, phi_max, topg_min, topg_max, temp_lapse_rate = combination
+    sia_e, ppq, tefo, phi_min, phi_max, topg_min, topg_max, temp_lapse_rate = combination
 
     ttphi = '{},{},{},{}'.format(phi_min, phi_max, topg_min, topg_max)
 
     name_options = OrderedDict()
     name_options['sb'] = stress_balance
-    name_options['gamma'] = temp_lapse_rate
-    name_options['dT'] = dT
-    name_options['ps'] = precip_scale_factor
     experiment =  '_'.join([climate, '_'.join(['_'.join([k, str(v)]) for k, v in name_options.items()])])
-
-    atmosphere_paleo_file = 'paleo_modifier_{}K.nc'.format(dT)
 
     script = 'cc_{}_g{}m_{}.sh'.format(domain.lower(), grid, experiment)
     scripts.append(script)
@@ -219,8 +214,8 @@ for n, combination in enumerate(combinations):
 
         # Setup Climate Forcing
         climate_params_dict = generate_climate(climate,
-                                               ice_surface_temp = '0,0,-100,5000',
-                                               climatic_mass_balance = '-3.,3,0,800,2500')
+                                               ice_surface_temp='0,0,-100,5000',
+                                               climatic_mass_balance='-3.,3,0,800,2500')
         
         # Setup Ocean Forcing
         ocean_params_dict = generate_ocean('null')
