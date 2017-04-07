@@ -18,94 +18,6 @@ from argparse import ArgumentParser
 
 from netCDF4 import Dataset as NC
 
-def permute_nc(variable, output_order=('time', 'station', 'profile', 'z', 'zb')):
-    '''
-    Permute dimensions of a NetCDF variable to match the output
-    storage order.
-
-    Parameters
-    ----------
-    variable : a netcdf variable
-               e.g. thk = nc.variables['thk']
-    output_order: dimension tuple (optional)
-                  default ordering is ('time', 'z', 'zb', 'y', 'x')
-
-    Returns
-    -------
-    var_perm : array_like
-    '''
-
-    input_dimensions = variable.dimensions
-
-    # filter out irrelevant dimensions
-    dimensions = filter(lambda x: x in input_dimensions,
-                        output_order)
-
-    # create the mapping
-    mapping = map(lambda x: dimensions.index(x),
-                  input_dimensions)
-
-    if mapping:
-        return np.transpose(variable[:], mapping)
-    else:
-        return variable[:]  # so that it does not break processing "mapping"
-
-def permute(array,
-               input_order=('time', 'station', 'profile', 'z', 'zb'),
-               output_order=('station', 'time', 'profile', 'z', 'zb')):
-    '''
-    Permute dimensions of an array to match the output
-    storage order.
-
-    Parameters
-    ----------
-    array: array_like
-    input_order: dimension tuple (optional)
-                  default ordering is ('time', 'station', 'profile', 'z', 'zb')'
-    output_order: dimension tuple (optional)
-                  default ordering is ('time', 'station', 'profile', 'z', 'zb')'
-
-    Returns
-    -------
-    var_perm : array_like
-    '''
-
-    input_dimensions = input_order
-
-    # filter out irrelevant dimensions
-    dimensions = filter(lambda x: x in input_dimensions,
-                        output_order)
-
-    # create the mapping
-    mapping = map(lambda x: dimensions.index(x),
-                  input_dimensions)
-
-    return np.transpose(array, mapping)
-
-
-def compute_normal_speed(ifile):
-    '''
-    Compute normal-to-profile speeds
-    '''
-    nc = NC(ifile, 'a')
-    ux = permute_nc(nc.variables['uvelsurf'])
-    vy = permute_nc(nc.variables['vvelsurf'])
-    nx = permute_nc(nc.variables['nx'])
-    ny = permute_nc(nc.variables['ny'])
-    dims = nc.variables['uvelsurf'].dimensions
-    fill_value = nc.variables['uvelsurf']._FillValue
-    nc.createVariable('velsurf_normal', 'd', dimensions=dims, fill_value=fill_value)
-    vn = ux * nx + vy * ny
-    # filter out irrelevant dimensions
-    input_dims = filter(lambda x: x in dims,
-                        ('station', 'time', 'profile', 'z', 'zb'))
-    nc.variables['velsurf_normal'][:] = permute(vn,
-                                                input_order=input_dims,
-                                                output_order=dims)
-    nc.variables['velsurf_normal'].units = 'm year-1'
-    nc.close()
-
-
 # set up the option parser
 parser = ArgumentParser()
 parser.description = "Postprocessing files."
@@ -116,7 +28,7 @@ options = parser.parse_args()
 idir = options.INDIR[0]
 
 # create logger
-logger = logging.getLogger('prepare_velocity_observations')
+logger = logging.getLogger('postprocess')
 logger.setLevel(logging.DEBUG)
 
 # create file handler which logs even debug messages
