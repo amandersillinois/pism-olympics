@@ -57,6 +57,8 @@ parser.add_argument("--bed_version", dest="bed_version",
 parser.add_argument("--stress_balance", dest="stress_balance",
                     choices=['sia', 'ssa+sia', 'ssa'],
                     help="stress balance solver", default='sia')
+parser.add_argument("-p", "--params", dest="params_list",
+                    help="Comma-separated list with params for sensitivity", default=None)
 
 
 options = parser.parse_args()
@@ -109,8 +111,29 @@ cmd = [ncgen, '-o',
        pism_config_nc, pism_config_cdl]
 sub.call(cmd)
 
-
 hydrology = 'diffuse'
+
+
+# Check which parameters are used for sensitivity study
+params_list = options.params_list
+do_lapse = False
+do_Tma = False
+do_precip = False
+do_phi = False
+do_ub = False
+if params_list is not None:
+    params = params_list.split(',')
+    if 'lapse' in params:
+        do_lapse = True
+    if 'Tma' in params:
+        do_Tma = True    
+    if 'precip' in params:
+        do_precip = True    
+    if 'phi' in params:
+        do_phi = True    
+    if 'ub' in params:
+        do_ub = True    
+
 
 # ########################################################
 # set up model initialization
@@ -123,20 +146,38 @@ ssa_e = (1.0)
 
 # Model Parameters for Sensitivity Studay
 wind_direction_values = [220]
-precip_scale_factor_values = [0.05, 0.07]
-dT_values = [-6, -5, -4]
+if do_precip:
+    precip_scale_factor_values = [0.05, 0.07]
+else:
+    precip_scale_factor_values = [0.05]
+if do_Tma:
+    dT_values = [-6, -5, -4]
+else:
+    dT_values = [-6]
+if do_phi:
+    phi_min_values = [15, 25, 35, 45]
+else:
+    phi_min_values = [35]
 sia_e_values = [3.0]
 ppq_values = [0.50]
 tefo_values = [0.020]
-phi_min_values = [15, 25, 35, 45]
 phi_max_values = phi_min_values
 topg_min_values = [-2000]
 topg_max_values = [4000]
-temp_lapse_rate_values = [5.0, 6.0]
+if do_lapse:
+    temp_lapse_rate_values = [5.0, 6.0]
+else:
+    temp_lapse_rate_values = [6.0]
+if do_ub:
+    ub_threshold_values = [100, 250, 500]
+else:
+    ub_threshold_values = [100]
+    
 combinations = list(itertools.product(wind_direction_values,
                                       precip_scale_factor_values,
                                       dT_values,
                                       sia_e_values,
+                                      ub_threshold_values,
                                       ppq_values,
                                       tefo_values,
                                       phi_min_values,
@@ -152,16 +193,22 @@ scripts_post = []
 
 for n, combination in enumerate(combinations):
 
-    wind_direction, precip_scale_factor, dT, sia_e, ppq, tefo, phi_min, phi_max, topg_min, topg_max, temp_lapse_rate = combination
+    wind_direction, precip_scale_factor, dT, sia_e, ub_threshold, ppq, tefo, phi_min, phi_max, topg_min, topg_max, temp_lapse_rate = combination
 
     ttphi = '{},{},{},{}'.format(phi_min, phi_max, topg_min, topg_max)
 
     name_options = OrderedDict()
     name_options['sb'] = stress_balance
-    name_options['phi'] = phi_min
-    name_options['gamma'] = temp_lapse_rate
-    name_options['dT'] = dT
-    name_options['ps'] = precip_scale_factor
+    if do_ub:
+        name_options['ubmin'] = ub_threshold
+    if do_phi:
+        name_options['phi'] = phi_min
+    if do_lapse:
+        name_options['gamma'] = temp_lapse_rate
+    if do_Tma:
+        name_options['dT'] = dT
+    if do_precip:
+        name_options['ps'] = precip_scale_factor
     experiment =  '_'.join([climate, '_'.join(['_'.join([k, str(v)]) for k, v in name_options.items()])])
 
     atmosphere_paleo_file = 'paleo_modifier_{}K.nc'.format(dT)
@@ -216,6 +263,7 @@ for n, combination in enumerate(combinations):
         sb_params_dict['sia_e'] = sia_e
         sb_params_dict['ssa_e'] = ssa_e
         sb_params_dict['ssa_n'] = ssa_n
+        sb_params_dict['basal_resistance.pseudo_plastic.u_threshold'] = ub_threshold
         sb_params_dict['pseudo_plastic_q'] = ppq
         sb_params_dict['till_effective_fraction_overburden'] = tefo
         sb_params_dict['topg_to_phi'] = ttphi
