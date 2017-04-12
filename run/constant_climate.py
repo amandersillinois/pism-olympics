@@ -155,7 +155,7 @@ if do_Tma:
 else:
     dT_values = [-6]
 if do_phi:
-    phi_min_values = [15, 25, 35, 45]
+    phi_min_values = [15, 25, 35]
 else:
     phi_min_values = [35]
 sia_e_values = [3.0]
@@ -165,11 +165,11 @@ phi_max_values = phi_min_values
 topg_min_values = [-2000]
 topg_max_values = [4000]
 if do_lapse:
-    temp_lapse_rate_values = [5.0, 6.0]
+    temp_lapse_rate_values = [6.0, 6.5]
 else:
     temp_lapse_rate_values = [6.0]
 if do_ub:
-    ub_threshold_values = [100, 250, 500]
+    ub_threshold_values = [100, 500]
 else:
     ub_threshold_values = [100]
     
