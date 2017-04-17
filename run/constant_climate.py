@@ -132,7 +132,9 @@ if params_list is not None:
     if 'phi' in params:
         do_phi = True    
     if 'ub' in params:
-        do_ub = True    
+        do_ub = True
+    if 'sia_e' in params:
+        do_sia_e = True
 
 
 # ########################################################
@@ -157,13 +159,16 @@ else:
 if do_phi:
     phi_min_values = [15, 25, 35]
 else:
-    phi_min_values = [35]
-sia_e_values = [3.0]
+    phi_min_values = [10]
+if do_sia_e:
+    sia_e_values = [1.0, 2.0, 3.0]
+else:
+    sia_e_values = [3.0]    
 ppq_values = [0.50]
 tefo_values = [0.020]
-phi_max_values = phi_min_values
-topg_min_values = [-2000]
-topg_max_values = [4000]
+phi_max_values = [30]
+topg_min_values = [0]
+topg_max_values = [200]
 if do_lapse:
     temp_lapse_rate_values = [6.0, 6.5]
 else:
