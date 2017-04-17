@@ -204,6 +204,8 @@ for n, combination in enumerate(combinations):
 
     name_options = OrderedDict()
     name_options['sb'] = stress_balance
+    if do_sia_e:
+        name_options['sia_e'] = sia_e
     if do_ub:
         name_options['ubmin'] = ub_threshold
     if do_phi:
