@@ -26,7 +26,7 @@ parser.add_argument("-q", '--queue', dest="queue", choices=list_queues(),
                     help='''queue. default=t1standard.''', default='normal')
 parser.add_argument("--climate", dest="climate",
                     choices=['elev', 'paleo', 'present'],
-                    help="Climate", default='present')
+                    help="Climate", default='paleo')
 parser.add_argument("-d", "--domain", dest="domain",
                     choices=['olympics', 'olympics_mtns'],
                     help="sets the modeling domain", default='olympics')
@@ -220,9 +220,9 @@ for n, combination in enumerate(combinations):
 
     atmosphere_paleo_file = 'paleo_modifier_{}K.nc'.format(dT)
 
-    script = 'cc_{}_g{}m_{}.sh'.format(domain.lower(), grid, experiment)
+    script = 'calib_{}_g{}m_{}.sh'.format(domain.lower(), grid, experiment)
     scripts.append(script)
-    script_post = 'cc_{}_g{}m_{}_post.sh'.format(domain.lower(), grid, experiment)
+    script_post = 'calib_{}_g{}m_{}_post.sh'.format(domain.lower(), grid, experiment)
     scripts_post.append(script_post)
 
     
