@@ -121,6 +121,7 @@ do_Tma = False
 do_precip = False
 do_phi = False
 do_ub = False
+do_sia_e = False
 if params_list is not None:
     params = params_list.split(',')
     if 'lapse' in params:
