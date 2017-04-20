@@ -153,7 +153,7 @@ if do_precip:
 else:
     precip_scale_factor_values = [0.05]
 if do_Tma:
-    dT_values = [-6, -5, -4]
+    dT_values = [-7, -6, -5, -4]
 else:
     dT_values = [-6]
 if do_phi:
