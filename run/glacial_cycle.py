@@ -145,7 +145,7 @@ ssa_e = (1.0)
 # Model Parameters for Sensitivity Studay
 wind_direction = 220
 if do_precip:
-    precip_scale_factor_values = [0.04, 0.07]
+    precip_scale_factor_values = [0.04, 0.05, 0.07]
 else:
     precip_scale_factor_values = [0.055]
 if do_phi:
@@ -315,10 +315,9 @@ for n, combination in enumerate(combinations):
         extra_file = spatial_ts_dict['extra_file']
         myfiles = ' '.join(['{}_{:.3f}.nc'.format(extra_file, k) for k in np.arange(start + exstep, end, exstep)])
         myoutfile = extra_file + '.nc'
-        myoutfile = os.path.join(odir, os.path.split(myoutfile)[-1])
+        myoutfile = os.path.join(odir, spatial_dir, os.path.split(myoutfile)[-1])
         cmd = ' '.join(['ncrcat -O -6 -h', myfiles, myoutfile, '\n'])
         f.write(cmd)
-        cmd = ' '.join(['ncks -O -4', os.path.join(odir, outfile), os.path.join(odir, outfile), '\n'])
         f.write(cmd)
 
     
