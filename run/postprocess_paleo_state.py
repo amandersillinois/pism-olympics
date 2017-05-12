@@ -48,21 +48,27 @@ fh.setFormatter(formatter)
 logger.addHandler(ch)
 logger.addHandler(fh)
 
-
 gdal_gtiff_options = gdal.TranslateOptions(format='GTiff', outputSRS='EPSG:26710')
 
 # Process experiments
+dirs = []
 dir_gtiff = 'processed_gtiff'
+dirs.append(dir_gtiff)
 dir_nc = 'processed_nc'
-
-for dir_processed in (dir_gtiff, dir_nc):
+dirs.append(dir_nc)
+dir_ini = 'processed_ice_noice'
+dirs.append(dir_ini)
+dir_hs = 'processed_hillshade'
+dirs.append(dir_hs)
+for dir_processed in dirs:
     if not os.path.isdir(os.path.join(idir, dir_processed)):
         os.mkdir(os.path.join(idir, dir_processed))
 
 pvars = ('thk', 'usurf', 'velsurf_mag', 'velbase_mag')
 fill_value = -2e9
 v_str = ' '.join('='.join([x, str(fill_value) + ';']) for x in pvars)
-ncap2_str = 'where(thk<10) {{ {} }};'.format(v_str)
+m_str = 'sftgif=mask*0; where(thk>10) {sftgif=1;}; where(usurf>300) {sftgif=3;};'
+ncap2_str = 'where(thk<10) {{ {} }}; {}'.format(v_str, m_str)
 exp_files = glob(os.path.join(idir, 'state', '*.nc'))
 for exp_file in exp_files:
     exp_basename =  os.path.split(exp_file)[-1].split('.nc')[0]
@@ -72,6 +78,10 @@ for exp_file in exp_files:
     nco.ncap2(input='-s "{}" {}'.format(ncap2_str, exp_file), output=exp_nc_wd, overwrite=True)
     opt = [c.Atted(mode="o", att_name="_FillValue", var_name=myvar, value=fill_value) for myvar in pvars]
     nco.ncatted(input=exp_nc_wd, options=opt)
+    logger.info('extracting ice-noice transition')
+    exp_ini_wd =  os.path.join(idir, dir_ini, exp_basename + '.shp')
+    cmd = ['extract_interface.py', '-m', 'sftgif', '-t', 'ice_noice', '--epsg', '26710', '-o', exp_ini_wd, exp_nc_wd]
+    sub.call(cmd)
     for mvar in pvars:
         m_exp_nc_wd = 'NETCDF:{}:{}'.format(exp_nc_wd, mvar)
         m_exp_gtiff_wd = os.path.join(idir, dir_gtiff, mvar + '_' + exp_basename + '.tif')
