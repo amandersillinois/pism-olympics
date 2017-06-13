@@ -82,12 +82,13 @@ input_file = options.input_file
 pism_dataname = 'pism_{domain}_{grid}m_v{version}.nc'.format(domain=domain.capitalize(),
                                                              grid=grid,
                                                              version=bed_version)
+profile_dir = 'profile'
 state_dir = 'state'
 scalar_dir = 'scalar'
 spatial_dir = 'spatial'
 if not os.path.isdir(odir):
     os.mkdir(odir)
-for tsdir in (scalar_dir, spatial_dir, state_dir):
+for tsdir in (profile_dir, scalar_dir, spatial_dir, state_dir):
     if not os.path.isdir(os.path.join(odir, tsdir)):
         os.mkdir(os.path.join(odir, tsdir))
 odir_tmp = '_'.join([odir, 'tmp'])
@@ -236,6 +237,8 @@ for n, combination in enumerate(combinations):
 
         # Setup General Parameters
         general_params_dict = OrderedDict()
+        general_params_dict['profile'] = os.path.join(odir, profile_dir, 'profile_${}.py'.format(batch_system['job_id']))
+
         if input_file is None:
             general_params_dict['i'] = pism_dataname
             general_params_dict['bootstrap'] = ''
