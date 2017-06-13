@@ -587,6 +587,9 @@ cd $SLURM_SUBMIT_DIR
 # across multiple compute nodes
 srun -l /bin/hostname | sort -n | awk \'{{print $2}}\' > ./nodes_$SLURM_JOBID
 
+ulimit -l unlimited
+ulimit -s unlimited
+
 """.format(queue=queue, walltime=walltime, nodes=nodes, ppn=ppn, cores=cores)
     elif system in ('keeling'):  ## FIXME
         
