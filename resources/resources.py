@@ -54,11 +54,11 @@ def default_spatial_ts_vars():
     Returns a list of commonly-used extra vars
     '''
     
-    exvars = ['air_temp_snapshot',
+    exvars = ['amount_fluxes',
+              'air_temp_snapshot',
               'beta',
               'bmelt',
               'cell_area',
-              'climatic_mass_balance',
               'dHdt',
               'diffusivity',
               'effective_air_temp',
@@ -71,7 +71,9 @@ def default_spatial_ts_vars():
               'lon',
               'lon_bnds',
               'precipitation',
-              'surface_mass_balance_average',
+              'saccum',
+              'smelt',
+              'srunoff'
               'taub_mag',
               'tauc',
               'taud_mag',

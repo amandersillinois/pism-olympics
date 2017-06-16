@@ -82,13 +82,13 @@ input_file = options.input_file
 pism_dataname = 'pism_{domain}_{grid}m_v{version}.nc'.format(domain=domain.capitalize(),
                                                              grid=grid,
                                                              version=bed_version)
-profile_dir = 'profile'
+perf_dir = 'performance'
 state_dir = 'state'
 scalar_dir = 'scalar'
 spatial_dir = 'spatial'
 if not os.path.isdir(odir):
     os.mkdir(odir)
-for tsdir in (profile_dir, scalar_dir, spatial_dir, state_dir):
+for tsdir in (perf_dir, scalar_dir, spatial_dir, state_dir):
     if not os.path.isdir(os.path.join(odir, tsdir)):
         os.mkdir(os.path.join(odir, tsdir))
 odir_tmp = '_'.join([odir, 'tmp'])
@@ -99,11 +99,7 @@ if not os.path.isdir(odir_tmp):
 pism_config = 'olympics_config'
 pism_config_nc = '.'.join([pism_config, 'nc'])
 pism_config_cdl = os.path.join('../config', '.'.join([pism_config, 'cdl']))
-# Anaconda libssl problem on chinook
-if system in ('chinook'):
-    ncgen = '/usr/bin/ncgen'
-else:
-    ncgen = 'ncgen'
+ncgen = 'ncgen'
 cmd = [ncgen, '-o',
        pism_config_nc, pism_config_cdl]
 sub.call(cmd)
@@ -237,7 +233,7 @@ for n, combination in enumerate(combinations):
 
         # Setup General Parameters
         general_params_dict = OrderedDict()
-        general_params_dict['profile'] = os.path.join(odir, profile_dir, 'profile_${}.py'.format(batch_system['job_id']))
+        general_params_dict['profile'] = os.path.join(odir, perf_dir, 'profile_${}.py'.format(batch_system['job_id'].split('.')[0]))
 
         if input_file is None:
             general_params_dict['i'] = pism_dataname
