@@ -142,15 +142,15 @@ ssa_e = (1.0)
 # Model Parameters for Sensitivity Studay
 wind_direction = 220
 if do_precip:
-    precip_scale_factor_values = [0.04, 0.05, 0.07]
+    precip_scale_factor_values = [0.05, 0.07]
 else:
     precip_scale_factor_values = [0.055]
 if do_phi:
     phi_min_values = [20, 30]
 else:
-    phi_min_values = [10]
+    phi_min_values = [30]
 if do_sia_e:
-    sia_e_values = [1.0, 2.0, 3.0]
+    sia_e_values = [1.0, 3.0]
 else:
     sia_e_values = [1.0]
 if do_q:

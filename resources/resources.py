@@ -71,6 +71,7 @@ def default_spatial_ts_vars():
               'lon',
               'lon_bnds',
               'precipitation',
+              'sftgif',
               'saccum',
               'smelt',
               'srunoff'
