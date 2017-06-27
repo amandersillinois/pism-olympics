@@ -26,7 +26,7 @@ parser.add_argument("-q", '--queue', dest="queue", choices=list_queues(),
                     help='''queue. default=t1standard.''', default='normal')
 parser.add_argument("--climate", dest="climate",
                     choices=['elev', 'paleo', 'present'],
-                    help="Climate", default='present')
+                    help="Climate", default='elev')
 parser.add_argument("-d", "--domain", dest="domain",
                     choices=['olympics', 'olympics_mtns'],
                     help="sets the modeling domain", default='olympics')
@@ -57,8 +57,6 @@ parser.add_argument("--bed_version", dest="bed_version",
 parser.add_argument("--stress_balance", dest="stress_balance",
                     choices=['sia', 'ssa+sia', 'ssa'],
                     help="stress balance solver", default='sia')
-parser.add_argument("-p", "--params", dest="params_list",
-                    help="Comma-separated list with params for sensitivity", default=None)
 
 
 options = parser.parse_args()
@@ -111,32 +109,8 @@ cmd = [ncgen, '-o',
        pism_config_nc, pism_config_cdl]
 sub.call(cmd)
 
+
 hydrology = 'diffuse'
-
-
-# Check which parameters are used for sensitivity study
-params_list = options.params_list
-do_lapse = False
-do_Tma = False
-do_precip = False
-do_phi = False
-do_ub = False
-do_sia_e = False
-if params_list is not None:
-    params = params_list.split(',')
-    if 'lapse' in params:
-        do_lapse = True
-    if 'Tma' in params:
-        do_Tma = True    
-    if 'precip' in params:
-        do_precip = True    
-    if 'phi' in params:
-        do_phi = True    
-    if 'ub' in params:
-        do_ub = True
-    if 'sia_e' in params:
-        do_sia_e = True
-
 
 # ########################################################
 # set up model initialization
@@ -147,50 +121,24 @@ if params_list is not None:
 ssa_n = (3.0)
 ssa_e = (1.0)
 
-# Model Parameters for Sensitivity Studay
-wind_direction_values = [220]
-if do_precip:
-    precip_scale_factor_values = [0.05, 0.07]
-else:
-    precip_scale_factor_values = [0.05]
-if do_Tma:
-    dT_values = [-7, -6, -5, -4]
-else:
-    dT_values = [-6]
-if do_phi:
-    phi_min_values = [15, 25, 35]
-else:
-    phi_min_values = [10]
-if do_sia_e:
-    sia_e_values = [1.0, 2.0, 3.0]
-else:
-    sia_e_values = [3.0]    
+# Model Parameters for Sensitivity Study
+ela_values = [1000, 1500, 2000]
+sia_e_values = [3.0]
 ppq_values = [0.50]
 tefo_values = [0.020]
-phi_max_values = [30]
+phi_min_values = [15]
+phi_max_values = [45]
 topg_min_values = [0]
 topg_max_values = [200]
-if do_lapse:
-    temp_lapse_rate_values = [6.0, 6.5]
-else:
-    temp_lapse_rate_values = [6.0]
-if do_ub:
-    ub_threshold_values = [100, 500]
-else:
-    ub_threshold_values = [100]
-    
-combinations = list(itertools.product(wind_direction_values,
-                                      precip_scale_factor_values,
-                                      dT_values,
+temp_lapse_rate_values = [5.0, 6.0]
+combinations = list(itertools.product(ela_values,
                                       sia_e_values,
-                                      ub_threshold_values,
                                       ppq_values,
                                       tefo_values,
                                       phi_min_values,
                                       phi_max_values,
                                       topg_min_values,
-                                      topg_max_values,
-                                      temp_lapse_rate_values))
+                                      topg_max_values))
 
 tsstep = 'yearly'
 
@@ -199,27 +147,14 @@ scripts_post = []
 
 for n, combination in enumerate(combinations):
 
-    wind_direction, precip_scale_factor, dT, sia_e, ub_threshold, ppq, tefo, phi_min, phi_max, topg_min, topg_max, temp_lapse_rate = combination
+    ela, sia_e, ppq, tefo, phi_min, phi_max, topg_min, topg_max = combination
 
     ttphi = '{},{},{},{}'.format(phi_min, phi_max, topg_min, topg_max)
 
     name_options = OrderedDict()
     name_options['sb'] = stress_balance
-    if do_sia_e:
-        name_options['sia_e'] = sia_e
-    if do_ub:
-        name_options['ubmin'] = ub_threshold
-    if do_phi:
-        name_options['phi'] = phi_min
-    if do_lapse:
-        name_options['gamma'] = temp_lapse_rate
-    if do_Tma:
-        name_options['dT'] = dT
-    if do_precip:
-        name_options['ps'] = precip_scale_factor
+    name_options['ela'] = ela
     experiment =  '_'.join([climate, '_'.join(['_'.join([k, str(v)]) for k, v in name_options.items()])])
-
-    atmosphere_paleo_file = 'paleo_modifier_{}K.nc'.format(dT)
 
     script = 'cc_{}_g{}m_{}.sh'.format(domain.lower(), grid, experiment)
     scripts.append(script)
@@ -271,7 +206,6 @@ for n, combination in enumerate(combinations):
         sb_params_dict['sia_e'] = sia_e
         sb_params_dict['ssa_e'] = ssa_e
         sb_params_dict['ssa_n'] = ssa_n
-        sb_params_dict['basal_resistance.pseudo_plastic.u_threshold'] = ub_threshold
         sb_params_dict['pseudo_plastic_q'] = ppq
         sb_params_dict['till_effective_fraction_overburden'] = tefo
         sb_params_dict['topg_to_phi'] = ttphi
@@ -280,14 +214,10 @@ for n, combination in enumerate(combinations):
         stress_balance_params_dict = generate_stress_balance(stress_balance, sb_params_dict)
 
         # Setup Climate Forcing
-        climate_file = '../data_sets/climate_forcing/ltop_climate_olympics_{grid}m_dir_{dir}_kg_m-2_yr-1.nc'.format(grid=grid, dir=wind_direction)
         climate_params_dict = generate_climate(climate,
-                                               **{'atmosphere_yearly_cycle_file': climate_file,
-                                                  'atmosphere_lapse_rate_file': climate_file,
-                                                  'atmosphere.precip_exponential_factor_for_temperature': precip_scale_factor,
-                                                  'temp_lapse_rate': temp_lapse_rate,
-                                                  'atmosphere_delta_T_file': atmosphere_paleo_file,
-                                                  'atmosphere_paleo_precip_file': atmosphere_paleo_file})
+                                               ice_surface_temp='0,0,-100,5000',
+                                               climatic_mass_balance='-3.,3,0,{},2500'.format(ela))
+        
         # Setup Ocean Forcing
         ocean_params_dict = generate_ocean('null')
         # Setup Hydrology Model

@@ -54,11 +54,11 @@ def default_spatial_ts_vars():
     Returns a list of commonly-used extra vars
     '''
     
-    exvars = ['air_temp_snapshot',
+    exvars = ['amount_fluxes',
+              'air_temp_snapshot',
               'beta',
               'bmelt',
               'cell_area',
-              'climatic_mass_balance',
               'dHdt',
               'diffusivity',
               'effective_air_temp',
@@ -71,18 +71,13 @@ def default_spatial_ts_vars():
               'lon',
               'lon_bnds',
               'precipitation',
+              'sftgif',
               'saccum',
-              'saccum_average',
               'smelt',
-              'smelt_average',
-              'srunoff',
-              'srunoff_average',
-              'surface_mass_balance_average',
+              'srunoff'
               'taub_mag',
               'tauc',
               'taud_mag',
-              'tempicethk_basal',
-              'temppabase',
               'tempsurf',
               'thk',
               'topg',
@@ -292,12 +287,9 @@ def generate_stress_balance(stress_balance, additional_params_dict):
     params_dict['stress_balance'] = stress_balance
     if stress_balance in ('ssa+sia'):
         params_dict['options_left'] = ''
-        # params_dict['ssafd_pc_type'] = 'asm'
-        # params_dict['ssafd_sub_pc_type'] = 'jacobi'
-        params_dict['cfbc'] = ''
+        # params_dict['cfbc'] = ''
         params_dict['sia_flow_law'] = 'gpbld3'
         params_dict['pseudo_plastic'] = ''
-        params_dict['tauc_slippery_grounding_lines'] = ''
         params_dict['bed_smoother_range'] = 50
 
     return merge_dicts(additional_params_dict, params_dict)
@@ -364,7 +356,7 @@ def generate_climate(climate, **kwargs):
     ice_density = 910.
     if climate in ('elev'):
         params_dict['surface'] = 'elevation'
-        params_dict['ice_surface_temp'] = '2,-15,0,2000'
+        params_dict['ice_surface_temp'] = '0,0,-100,5000'
         params_dict['climatic_mass_balance'] = '-3.,3,0,800,2500'
     elif climate in ('present'):
         params_dict['atmosphere'] = 'yearly_cycle,lapse_rate'
@@ -452,6 +444,7 @@ def list_systems():
             'chinook',
             'electra_broadwell',
             'fish',
+            'keeling',
             'pacman',
             'pleiades',
             'pleiades_haswell',
@@ -518,6 +511,14 @@ def make_batch_header(system, cores, walltime, queue):
                               't2standard' : 24,
                               't2small' : 24,
                               'debug' : 24}}
+    systems['keeling'] = {'mpido' : mpido,
+                          'submit' : 'sbatch',
+                          'work_dir' : 'SLURM_SUBMIT_DIR',
+                          'job_id' : 'SLURM_JOBID',
+                          'queue' : {
+                              't2standard' : 24,  ## FIXME
+                              't2small' : 24,   
+                              'debug' : 24}}
     mpido = 'mpiexec -n {cores}'.format(cores=cores)
     systems['electra_broadwell'] = {'mpido' : mpido,
                            'submit' : 'qsub',
@@ -568,6 +569,32 @@ def make_batch_header(system, cores, walltime, queue):
         header = ''
         
     elif system in ('chinook'):
+        
+        header = """#!/bin/sh
+#SBATCH --partition={queue}
+#SBATCH --ntasks={cores}
+#SBATCH --tasks-per-node={ppn}
+#SBATCH --time={walltime}
+#SBATCH --mail-user=aaschwanden@alaska.edu
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=END
+#SBATCH --mail-type=FAIL
+#SBATCH --output=pism.%j
+
+module list
+
+cd $SLURM_SUBMIT_DIR
+
+# Generate a list of compute node hostnames reserved for this job,
+# this ./nodes file is necessary for slurm to spawn mpi processes
+# across multiple compute nodes
+srun -l /bin/hostname | sort -n | awk \'{{print $2}}\' > ./nodes_$SLURM_JOBID
+
+ulimit -l unlimited
+ulimit -s unlimited
+
+""".format(queue=queue, walltime=walltime, nodes=nodes, ppn=ppn, cores=cores)
+    elif system in ('keeling'):  ## FIXME
         
         header = """#!/bin/sh
 #SBATCH --partition={queue}

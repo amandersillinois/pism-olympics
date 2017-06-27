@@ -26,14 +26,14 @@ parser.add_argument("-q", '--queue', dest="queue", choices=list_queues(),
                     help='''queue. default=t1standard.''', default='normal')
 parser.add_argument("--climate", dest="climate",
                     choices=['elev', 'paleo', 'present'],
-                    help="Climate", default='present')
+                    help="Climate", default='paleo')
 parser.add_argument("-d", "--domain", dest="domain",
                     choices=['olympics', 'olympics_mtns'],
                     help="sets the modeling domain", default='olympics')
 parser.add_argument("--start_year", dest="start", type=float,
                     help="Start year", default=0)
 parser.add_argument("--duration", dest="duration", type=float,
-                    help="Duration", default=10)
+                    help="Duration", default=5000)
 parser.add_argument("--exstep", dest="exstep", type=float,
                     help="Spatial time series writing interval", default=100)
 parser.add_argument("-f", "--o_format", dest="oformat",
@@ -41,7 +41,7 @@ parser.add_argument("-f", "--o_format", dest="oformat",
                     help="output format", default='netcdf3')
 parser.add_argument("-g", "--grid", dest="grid", type=int,
                     choices=accepted_resolutions(),
-                    help="horizontal grid resolution", default=1000)
+                    help="horizontal grid resolution", default=500)
 parser.add_argument("-i", "--input_file", dest="input_file",
                     help="Input file to restart from", default=None)
 parser.add_argument("--o_dir", dest="odir",
@@ -56,7 +56,7 @@ parser.add_argument("--bed_version", dest="bed_version",
                     help="Version of bed DEM.", default='1')
 parser.add_argument("--stress_balance", dest="stress_balance",
                     choices=['sia', 'ssa+sia', 'ssa'],
-                    help="stress balance solver", default='sia')
+                    help="stress balance solver", default='ssa+sia')
 parser.add_argument("-p", "--params", dest="params_list",
                     help="Comma-separated list with params for sensitivity", default=None)
 
@@ -120,8 +120,8 @@ do_lapse = False
 do_Tma = False
 do_precip = False
 do_phi = False
-do_ub = False
 do_sia_e = False
+do_q = False
 if params_list is not None:
     params = params_list.split(',')
     if 'lapse' in params:
@@ -132,10 +132,10 @@ if params_list is not None:
         do_precip = True    
     if 'phi' in params:
         do_phi = True    
-    if 'ub' in params:
-        do_ub = True
     if 'sia_e' in params:
         do_sia_e = True
+    if 'q' in params:
+        do_q = True
 
 
 # ########################################################
@@ -148,42 +148,39 @@ ssa_n = (3.0)
 ssa_e = (1.0)
 
 # Model Parameters for Sensitivity Studay
-wind_direction_values = [220]
+wind_direction = 220
 if do_precip:
-    precip_scale_factor_values = [0.05, 0.07]
+    precip_scale_factor_values = [0.04, 0.07]
 else:
-    precip_scale_factor_values = [0.05]
+    precip_scale_factor_values = [0.055]
 if do_Tma:
-    dT_values = [-7, -6, -5, -4]
+    dT_values = [-7, -6, -5]
 else:
     dT_values = [-6]
 if do_phi:
-    phi_min_values = [15, 25, 35]
+    phi_min_values = [20, 30]
 else:
     phi_min_values = [10]
 if do_sia_e:
     sia_e_values = [1.0, 2.0, 3.0]
 else:
-    sia_e_values = [3.0]    
-ppq_values = [0.50]
+    sia_e_values = [1.0]
+if do_q:
+    ppq_values = [0.33, 0.5]
+else:
+    ppq_values = [0.5]
 tefo_values = [0.020]
 phi_max_values = [30]
-topg_min_values = [0]
-topg_max_values = [200]
+topg_min_values = [-500]
+topg_max_values = [4000]
 if do_lapse:
-    temp_lapse_rate_values = [6.0, 6.5]
+    temp_lapse_rate_values = [5.0,  6.5]
 else:
     temp_lapse_rate_values = [6.0]
-if do_ub:
-    ub_threshold_values = [100, 500]
-else:
-    ub_threshold_values = [100]
     
-combinations = list(itertools.product(wind_direction_values,
-                                      precip_scale_factor_values,
+combinations = list(itertools.product(precip_scale_factor_values,
                                       dT_values,
                                       sia_e_values,
-                                      ub_threshold_values,
                                       ppq_values,
                                       tefo_values,
                                       phi_min_values,
@@ -199,16 +196,18 @@ scripts_post = []
 
 for n, combination in enumerate(combinations):
 
-    wind_direction, precip_scale_factor, dT, sia_e, ub_threshold, ppq, tefo, phi_min, phi_max, topg_min, topg_max, temp_lapse_rate = combination
-
+    precip_scale_factor, dT, sia_e, ppq, tefo, phi_min, phi_max, topg_min, topg_max, temp_lapse_rate = combination
+    
+    phi_max = phi_min
     ttphi = '{},{},{},{}'.format(phi_min, phi_max, topg_min, topg_max)
 
+    
     name_options = OrderedDict()
     name_options['sb'] = stress_balance
     if do_sia_e:
         name_options['sia_e'] = sia_e
-    if do_ub:
-        name_options['ubmin'] = ub_threshold
+    if do_q:
+        name_options['q'] = ppq
     if do_phi:
         name_options['phi'] = phi_min
     if do_lapse:
@@ -221,9 +220,9 @@ for n, combination in enumerate(combinations):
 
     atmosphere_paleo_file = 'paleo_modifier_{}K.nc'.format(dT)
 
-    script = 'cc_{}_g{}m_{}.sh'.format(domain.lower(), grid, experiment)
+    script = 'calib_{}_g{}m_{}.sh'.format(domain.lower(), grid, experiment)
     scripts.append(script)
-    script_post = 'cc_{}_g{}m_{}_post.sh'.format(domain.lower(), grid, experiment)
+    script_post = 'calib_{}_g{}m_{}_post.sh'.format(domain.lower(), grid, experiment)
     scripts_post.append(script_post)
 
     
@@ -271,10 +270,11 @@ for n, combination in enumerate(combinations):
         sb_params_dict['sia_e'] = sia_e
         sb_params_dict['ssa_e'] = ssa_e
         sb_params_dict['ssa_n'] = ssa_n
-        sb_params_dict['basal_resistance.pseudo_plastic.u_threshold'] = ub_threshold
         sb_params_dict['pseudo_plastic_q'] = ppq
         sb_params_dict['till_effective_fraction_overburden'] = tefo
-        sb_params_dict['topg_to_phi'] = ttphi
+        sb_params_dict['plastic_phi'] = phi_min
+        sb_params_dict['ssafd_ksp_divtol'] = 1e300
+        sb_params_dict['cfbc'] = ''
         sb_params_dict['ssa_method'] = 'fd'
 
         stress_balance_params_dict = generate_stress_balance(stress_balance, sb_params_dict)
