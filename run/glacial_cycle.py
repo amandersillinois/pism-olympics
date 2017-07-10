@@ -144,7 +144,7 @@ wind_direction = 220
 if do_precip:
     precip_scale_factor_values = [0.05, 0.07]
 else:
-    precip_scale_factor_values = [0.055]
+    precip_scale_factor_values = [0.07]
 if do_phi:
     phi_min_values = [20, 30]
 else:
