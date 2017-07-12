@@ -716,7 +716,7 @@ cd $PBS_O_WORKDIR
 
 module list
 
-cd $PBS_O_WORKDIR
+#cd $PBS_O_WORKDIR
 
 """
     else:
