@@ -45,10 +45,7 @@ class OrographicPrecipitation(object):
         logger.info('Running _compute_precip')
         physical_constants = self.physical_constants
         eps = 1e-18
-        pad_max = 200
-        pad = int(np.ceil(((self.nx + self.ny) / 2) / 100)) * 100
-        if pad > pad_max:
-            pad = pad_max
+        pad = 250
         logger.debug(
             'Raster shape before padding ({},{})'.format(
                 self.nx, self.ny))
@@ -137,7 +134,6 @@ class OrographicPrecipitation(object):
             P_karot_denom_Hw, np.multiply(
                 P_karot_denom_tauc, P_karot_denom_tauf))
         P_karot = np.divide(P_karot_num, P_karot_denom)
-
         # Converting from wave domain back to space domain
         logger.info('Performing inverse Fourier transform')
         P = np.fft.ifft2(P_karot)
