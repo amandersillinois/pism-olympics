@@ -285,7 +285,7 @@ for n, combination in enumerate(combinations):
 
         # Setup Scalar and Spatial Time Series Reporting
         exvars = default_spatial_ts_vars()
-        spatial_ts_dict = generate_spatial_ts(outfile, exvars, exstep, odir=odir_tmp, split=True)
+        spatial_ts_dict = generate_spatial_ts(outfile, exvars, exstep, odir=odir_tmp)
         scalar_ts_dict = generate_scalar_ts(outfile, tsstep, odir=os.path.join(odir, scalar_dir))
 
         # Merge All Parameter Dictionaries

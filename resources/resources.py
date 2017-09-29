@@ -74,7 +74,7 @@ def default_spatial_ts_vars():
               'sftgif',
               'saccum',
               'smelt',
-              'srunoff'
+              'srunoff',
               'taub_mag',
               'tauc',
               'taud_mag',
