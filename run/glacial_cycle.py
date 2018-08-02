@@ -4,16 +4,32 @@
 import numpy as np
 import itertools
 from collections import OrderedDict
-import os
+import os, sys, shlex
+from os.path import join, abspath, realpath, dirname
+
 try:
     import subprocess32 as sub
 except:
     import subprocess as sub
-from argparse import ArgumentParser
+
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 import sys
-sys.path.append('../resources/')
+
+def current_script_directory():
+    import inspect
+    filename = inspect.stack(0)[0][1]
+    return realpath(dirname(filename))
+
+script_directory = current_script_directory()
+
+sys.path.append(join(script_directory, "../resources"))
 from resources import *
 
+def map_dict(val, mdict):
+    try:
+        return mdict[val]
+    except:
+        return val
 
 # set up the option parser
 parser = ArgumentParser()
@@ -40,8 +56,10 @@ parser.add_argument("-g", "--grid", dest="grid", type=int,
                     help="horizontal grid resolution", default=500)
 parser.add_argument("-i", "--input_file", dest="input_file",
                     help="Input file to restart from", default=None)
-parser.add_argument("--o_dir", dest="odir",
-                    help="output directory. Default: current directory", default='test')
+parser.add_argument("--i_dir", dest="input_dir",
+                    help="input directory", default=abspath(join(script_directory, "..")))
+parser.add_argument("--o_dir", dest="output_dir",
+                    help="output directory", default='test_dir')
 parser.add_argument("--o_size", dest="osize",
                     choices=['small', 'medium', 'big', 'big_2d'],
                     help="output size type", default='medium')
@@ -60,7 +78,11 @@ parser.add_argument("-p", "--params", dest="params_list",
 options = parser.parse_args()
 
 nn = options.n
-odir = options.odir
+
+input_dir = abspath(options.input_dir)
+output_dir = abspath(options.output_dir)
+spatial_tmp_dir = abspath(options.output_dir + '_tmp')
+
 oformat = options.oformat
 osize = options.osize
 queue = options.queue
@@ -79,33 +101,63 @@ exstep = options.exstep
 domain = options.domain
 pism_exec = generate_domain(domain)
 input_file = options.input_file
-pism_dataname = 'pism_{domain}_{grid}m_v{version}.nc'.format(domain=domain.capitalize(),
+pism_dataname = '$input_dir/data_sets/bed_dem/pism_{domain}_{grid}m_v{version}.nc'.format(domain=domain.capitalize(),
                                                              grid=grid,
                                                              version=bed_version)
-perf_dir = 'performance'
-state_dir = 'state'
-scalar_dir = 'scalar'
-spatial_dir = 'spatial'
-if not os.path.isdir(odir):
-    os.mkdir(odir)
-for tsdir in (perf_dir, scalar_dir, spatial_dir, state_dir):
-    if not os.path.isdir(os.path.join(odir, tsdir)):
-        os.mkdir(os.path.join(odir, tsdir))
-odir_tmp = '_'.join([odir, 'tmp'])
-if not os.path.isdir(odir_tmp):
-    os.mkdir(odir_tmp)
+dirs = {"output": "$output_dir", "spatial_tmp": "$spatial_tmp_dir"}
+for d in ["performance", "state", "scalar", "spatial", "snap", "jobs"]:
+    dirs[d] = "$output_dir/{dir}".format(dir=d)
 
-# Configuration File Setup
+# use the actual path of the run scripts directory (we need it now and
+# not during the simulation)
+scripts_dir = join(output_dir, "run_scripts")
+if not os.path.isdir(scripts_dir):
+    os.makedirs(scripts_dir)
+
+# generate the config file *after* creating the output directory
 pism_config = 'olympics_config'
-pism_config_nc = '.'.join([pism_config, 'nc'])
-pism_config_cdl = os.path.join('../config', '.'.join([pism_config, 'cdl']))
-ncgen = 'ncgen'
-cmd = [ncgen, '-o',
-       pism_config_nc, pism_config_cdl]
-sub.call(cmd)
+pism_config_nc = join(output_dir, pism_config + ".nc")
+
+cmd = "ncgen -o {output} {input_dir}/config/{config}.cdl".format(output=pism_config_nc,
+                                                                 input_dir=input_dir,
+                                                                 config=pism_config)
+sub.call(shlex.split(cmd))
+
 
 hydrology = 'diffuse'
 
+# these Bash commands are added to the beginning of the run scrips
+run_header = """# stop if a variable is not defined
+set -u
+# stop on errors
+set -e
+
+# path to the config file
+config="{config}"
+# path to the input directory (input data sets are contained in this directory)
+input_dir="{input_dir}"
+# output directory
+output_dir="{output_dir}"
+# temporary directory for spatial files
+spatial_tmp_dir="{spatial_tmp_dir}"
+
+# create required output directories
+for each in {dirs};
+do
+  mkdir -p $each
+done
+
+""".format(input_dir=input_dir,
+           output_dir=output_dir,
+           spatial_tmp_dir=spatial_tmp_dir,
+           config=pism_config_nc,
+           dirs=" ".join(list(dirs.values())))
+
+
+
+# ########################################################
+# set up model initialization
+# ########################################################
 
 # Check which parameters are used for sensitivity study
 params_list = options.params_list
@@ -128,12 +180,6 @@ if params_list is not None:
         do_sia_e = True
     if 'q' in params:
         do_q = True
-
-
-# ########################################################
-# set up model initialization
-# ########################################################
-
 
 # Model Parameters
 ssa_n = (3.0)
@@ -165,8 +211,9 @@ if do_lapse:
     temp_lapse_rate_values = [5.0,  6.5]
 else:
     temp_lapse_rate_values = [6.0]
-    
-combinations = list(itertools.product(precip_scale_factor_values,
+
+bed_smoother_range = [0, 50, 250, 500, 1000]
+combinations = list(itertools.product(bed_smoother_range, precip_scale_factor_values,
                                       sia_e_values,
                                       ppq_values,
                                       tefo_values,
@@ -183,7 +230,7 @@ scripts_post = []
 
 for n, combination in enumerate(combinations):
 
-    precip_scale_factor, sia_e, ppq, tefo, phi_min, phi_max, topg_min, topg_max, temp_lapse_rate = combination
+    bed_smoother_range, precip_scale_factor, sia_e, ppq, tefo, phi_min, phi_max, topg_min, topg_max, temp_lapse_rate = combination
     
     phi_max = phi_min
     ttphi = '{},{},{},{}'.format(phi_min, phi_max, topg_min, topg_max)
@@ -191,6 +238,7 @@ for n, combination in enumerate(combinations):
     
     name_options = OrderedDict()
     name_options['sb'] = stress_balance
+    name_options['bsr'] = bed_smoother_range
     if do_sia_e:
         name_options['sia_e'] = sia_e
     if do_q:
@@ -205,9 +253,9 @@ for n, combination in enumerate(combinations):
 
     atmosphere_paleo_file = 'pism_scaled_dT.nc'
 
-    script = 'gc_{}_g{}m_{}.sh'.format(domain.lower(), grid, experiment)
+    script = join(scripts_dir, 'gc_{}_g{}m_{}.sh'.format(domain.lower(), grid, experiment))
     scripts.append(script)
-    script_post = 'gc_{}_g{}m_{}_post.sh'.format(domain.lower(), grid, experiment)
+    script_post = join(scripts_dir, 'post_gc_{}_g{}m_{}.sh'.format(domain.lower(), grid, experiment))
     scripts_post.append(script_post)
 
     
@@ -220,30 +268,33 @@ for n, combination in enumerate(combinations):
     batch_header, batch_system = make_batch_header(system, nn, walltime, queue)
             
     with open(script, 'w') as f:
-
+        
+        job_no = 1
         f.write(batch_header)
+        f.write(run_header)
 
         outfile = '{domain}_g{grid}m_{experiment}_{start}_{end}a.nc'.format(domain=domain.lower(),
-                                                                           grid=grid,
-                                                                           experiment=experiment,
-                                                                           start=int(start),
+                                                                            grid=grid,
+                                                                            experiment=experiment,
+                                                                            start=int(start),
                                                                             end=int(end))
 
-        prefix = generate_prefix_str(pism_exec)
+        pism = generate_prefix_str(pism_exec)
 
         # Setup General Parameters
-        general_params_dict = OrderedDict()
-        general_params_dict['profile'] = os.path.join(odir, perf_dir, 'profile_${}.py'.format(batch_system['job_id'].split('.')[0]))
-
+        general_params_dict = {
+            'ys':                          start,
+            'ye':                          end,
+            'o':                           join(dirs["state"], outfile),
+            'o_format':                    oformat,
+            'config_override':             "$config"
+        }
+            
         if input_file is None:
             general_params_dict['i'] = pism_dataname
             general_params_dict['bootstrap'] = ''
         else:
             general_params_dict['i'] = input_file
-        general_params_dict['ys'] = start
-        general_params_dict['ye'] = end
-        general_params_dict['o'] = os.path.join(odir, state_dir, outfile)
-        general_params_dict['o_format'] = oformat
         general_params_dict['o_size'] = osize
         general_params_dict['config_override'] = pism_config_nc
         
@@ -263,6 +314,7 @@ for n, combination in enumerate(combinations):
         sb_params_dict['ssafd_ksp_divtol'] = 1e300
         sb_params_dict['cfbc'] = ''
         sb_params_dict['ssa_method'] = 'fd'
+        sb_params_dict['bed_smoother_range'] = bed_smoother_range
 
         stress_balance_params_dict = generate_stress_balance(stress_balance, sb_params_dict)
 
@@ -285,25 +337,28 @@ for n, combination in enumerate(combinations):
 
         # Setup Scalar and Spatial Time Series Reporting
         exvars = default_spatial_ts_vars()
-        spatial_ts_dict = generate_spatial_ts(outfile, exvars, exstep, odir=odir_tmp, split=True)
-        scalar_ts_dict = generate_scalar_ts(outfile, tsstep, odir=os.path.join(odir, scalar_dir))
+        spatial_ts_dict = generate_spatial_ts(outfile, exvars, exstep, odir=dirs['spatial_tmp'], split=False)
+        scalar_ts_dict = generate_scalar_ts(outfile, tsstep, odir=dirs['scalar'])
 
         # Merge All Parameter Dictionaries
         all_params_dict = merge_dicts(general_params_dict, grid_params_dict, stress_balance_params_dict, climate_params_dict, ocean_params_dict, hydro_params_dict, calving_params_dict, spatial_ts_dict, scalar_ts_dict)
-        all_params = ' '.join([' '.join(['-' + k, str(v)]) for k, v in all_params_dict.items()])
-
-        if system in ('debug'):
-            cmd = ' '.join([batch_system['mpido'], prefix, all_params, '2>&1 | tee {outdir}/job.${batch}'.format(outdir=odir,
-                                                                                                                 batch=batch_system['job_id'])])
+        all_params = ' \\\n  '.join(["-{} {}".format(k, v) for k, v in list(all_params_dict.items())])
+        
+        if system == 'debug':
+            redirect = ' 2>&1 | tee {jobs}/job_{job_no}'
         else:
-            cmd = ' '.join([batch_system['mpido'], prefix, all_params, '> {outdir}/job.${batch}  2>&1'.format(outdir=odir,
-                                                                                                              batch=batch_system['job_id'])])
+            redirect = ' > {jobs}/job_{job_no}.${job_id} 2>&1'
+
+        template = "{mpido} {pism} {params}" + redirect
+
+        context = merge_dicts(batch_system,
+                              dirs,
+                              {"job_no" : job_no, "pism" : pism, "params" : all_params})
+        cmd = template.format(**context)
 
         f.write(cmd)
         f.write('\n')
-        f.write('\n')
-        f.write('{} {}\n'.format(batch_system['submit'], script_post))
-        f.write('\n')
+        f.write(batch_system.get("footer", ""))
 
     post_header = make_batch_post_header(system)
 
@@ -314,7 +369,7 @@ for n, combination in enumerate(combinations):
         extra_file = spatial_ts_dict['extra_file']
         myfiles = ' '.join(['{}_{:.3f}.nc'.format(extra_file, k) for k in np.arange(start + exstep, end, exstep)])
         myoutfile = extra_file + '.nc'
-        myoutfile = os.path.join(odir, spatial_dir, os.path.split(myoutfile)[-1])
+        myoutfile = os.path.join(dirs['spatial'], os.path.split(myoutfile)[-1])
         cmd = ' '.join(['ncrcat -O -6 -h', myfiles, myoutfile, '\n'])
         f.write(cmd)
         f.write(cmd)
