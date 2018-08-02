@@ -337,8 +337,13 @@ for n, combination in enumerate(combinations):
 
         # Setup Scalar and Spatial Time Series Reporting
         exvars = default_spatial_ts_vars()
+<<<<<<< HEAD
         spatial_ts_dict = generate_spatial_ts(outfile, exvars, exstep, odir=dirs['spatial_tmp'], split=False)
         scalar_ts_dict = generate_scalar_ts(outfile, tsstep, odir=dirs['scalar'])
+=======
+        spatial_ts_dict = generate_spatial_ts(outfile, exvars, exstep, odir=odir_tmp)
+        scalar_ts_dict = generate_scalar_ts(outfile, tsstep, odir=os.path.join(odir, scalar_dir))
+>>>>>>> 268b87b14f97d47620b67a49d683e42b3e53196e
 
         # Merge All Parameter Dictionaries
         all_params_dict = merge_dicts(general_params_dict, grid_params_dict, stress_balance_params_dict, climate_params_dict, ocean_params_dict, hydro_params_dict, calving_params_dict, spatial_ts_dict, scalar_ts_dict)
