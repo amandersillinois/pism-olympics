@@ -189,7 +189,7 @@ if __name__ == "__main__":
             station = stations[k]
             station['p_exp'] = dict()
             for exp in st_data:
-                print k, exp , st_data[exp][0][k], st_data[exp][1]
+                print(k, exp , st_data[exp][0][k], st_data[exp][1])
                 station['p_exp'][exp] = [st_data[exp][0][k], st_data[exp][1]]
             lon, lat =  station['point']
             row = [lon, lat, station['p_obs'], station['p_obs_units']] + sum(station['p_exp'].values(), []) + [ounits]
