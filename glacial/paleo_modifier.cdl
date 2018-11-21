@@ -1,0 +1,33 @@
+netcdf paleo_modifier {
+dimensions:
+	time = 1 ;
+	tbnds = 2 ;
+variables:
+	float delta_T(time) ;
+		delta_T:units = "Kelvin" ;
+	float time(time) ;
+		time:long_name = "Time (years before present)" ;
+		time:standard_name = "time" ;
+		time:units = "years since 1-1-1" ;
+		time:calendar = "365_day" ;
+		time:bounds = "time_bnds" ;
+	float time_bnds(time, tbnds) ;
+	float frac_P(time) ;
+
+// global attributes:
+		:Conventions = "CF-1.5" ;
+		:Creators = "Andy Aschwanden" ;
+		:Title = "Olympics Climate" ;
+		:NCO = "\"4.6.0\"" ;
+		:nco_openmp_thread_number = 1 ;
+data:
+
+ delta_T = 0 ;
+
+ time = 0 ;
+
+ time_bnds =
+  -5000000, 5000000 ;
+
+ frac_P = 0.5 ;
+}

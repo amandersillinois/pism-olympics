@@ -59,7 +59,6 @@ def default_spatial_ts_vars():
               'air_temp_snapshot',
               'beta',
               'bmelt',
-              'cell_area',
               'dHdt',
               'diffusivity',
               'effective_air_temp',
@@ -68,9 +67,7 @@ def default_spatial_ts_vars():
               'ice_surface_temp',
               'mask',
               'lat',
-              'lat_bnds',
               'lon',
-              'lon_bnds',
               'sftgif',
               'mass_fluxes',
               'pdd_rates',
@@ -287,7 +284,7 @@ def generate_stress_balance(stress_balance, additional_params_dict):
     if stress_balance in ('ssa+sia'):
         params_dict['options_left'] = ''
         # params_dict['cfbc'] = ''
-        params_dict['sia_flow_law'] = 'gpbld3'
+        params_dict['sia_flow_law'] = 'gpbld'
         params_dict['pseudo_plastic'] = ''
 
     return merge_dicts(additional_params_dict, params_dict)
@@ -374,7 +371,7 @@ def generate_climate(climate, **kwargs):
         else:
             params_dict['atmosphere_lapse_rate_file'] = kwargs['atmosphere_lapse_rate_file']
         params_dict['surface'] = 'pdd'
-    elif climate in ('paleo'):
+    elif climate in ('paleo', 'calib'):
         params_dict['atmosphere'] = 'yearly_cycle,lapse_rate,delta_T,paleo_precip'
         params_dict['surface.pdd.factor_ice'] = 4.59 / ice_density  # Shea et al (2009)
         params_dict['surface.pdd.factor_snow'] = 3.04 / ice_density  # Shea et al (2009)

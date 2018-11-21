@@ -41,7 +41,7 @@ parser.add_argument("-w", '--wall_time', dest="walltime",
 parser.add_argument("-q", '--queue', dest="queue", choices=list_queues(),
                     help='''queue. default=t1standard.''', default='normal')
 parser.add_argument("--climate", dest="climate",
-                    choices=['elev', 'paleo', 'present'],
+                    choices=['elev', 'paleo', 'calib', 'present'],
                     help="Climate", default='paleo')
 parser.add_argument("-d", "--domain", dest="domain",
                     choices=['olympics', 'olympics_mtns'],
@@ -170,8 +170,6 @@ if params_list is not None:
     params = params_list.split(',')
     if 'lapse' in params:
         do_lapse = True
-    if 'Tma' in params:
-        do_Tma = True    
     if 'precip' in params:
         do_precip = True    
     if 'phi' in params:
@@ -226,7 +224,6 @@ combinations = list(itertools.product(bed_smoother_range, precip_scale_factor_va
 tsstep = 'yearly'
 
 scripts = []
-scripts_post = []
 
 for n, combination in enumerate(combinations):
 
@@ -251,13 +248,13 @@ for n, combination in enumerate(combinations):
         name_options['ps'] = precip_scale_factor
     experiment =  '_'.join([climate, '_'.join(['_'.join([k, str(v)]) for k, v in name_options.items()])])
 
-    atmosphere_paleo_file = 'pism_scaled_dT.nc'
+    if climate == 'calib':
+        atmosphere_paleo_file = 'paleo_modifier_-8K.nc'
+    else:
+        atmosphere_paleo_file = 'pism_scaled_dT.nc'
 
     script = join(scripts_dir, 'gc_{}_g{}m_{}.sh'.format(domain.lower(), grid, experiment))
     scripts.append(script)
-    script_post = join(scripts_dir, 'post_gc_{}_g{}m_{}.sh'.format(domain.lower(), grid, experiment))
-    scripts_post.append(script_post)
-
     
     for filename in (script):
         try:
@@ -360,24 +357,8 @@ for n, combination in enumerate(combinations):
         f.write('\n')
         f.write(batch_system.get("footer", ""))
 
-    post_header = make_batch_post_header(system)
-
-    with open(script_post, 'w') as f:
-
-        f.write(post_header)
-
-        extra_file = spatial_ts_dict['extra_file']
-        myfiles = ' '.join(['{}_{:.3f}.nc'.format(extra_file, k) for k in np.arange(start + exstep, end, exstep)])
-        myoutfile = extra_file + '.nc'
-        myoutfile = os.path.join(dirs['spatial'], os.path.split(myoutfile)[-1])
-        cmd = ' '.join(['ncrcat -O -6 -h', myfiles, myoutfile, '\n'])
-        f.write(cmd)
-        f.write(cmd)
 
     
 scripts = uniquify_list(scripts)
-scripts_post = uniquify_list(scripts_post)
 print('\n'.join([script for script in scripts]))
-print('\nwritten\n')
-print('\n'.join([script for script in scripts_post]))
 print('\nwritten\n')
