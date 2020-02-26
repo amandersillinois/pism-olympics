@@ -92,6 +92,6 @@ ncap2 -O -s "delta_T=0.4*delta_T;" pism_dT.nc pism_scaled_dT.nc
 
 ncgen -o paleo_modifier.nc paleo_modifier.cdl
 
-for T in -8 -6 -4 -2; do
+for T in -8.0 -7.0 -6.0 -5.0 -4.0 -3.0 -2.0 -1.0 0.0; do
      ncap2 -O -s "delta_T(0)=${T};" paleo_modifier.nc paleo_modifier_${T}K.nc
  done

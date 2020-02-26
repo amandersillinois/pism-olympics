@@ -49,7 +49,11 @@ parser.add_argument(
     "-q", "--queue", dest="queue", choices=list_queues(), help="""queue. default=t1standard.""", default="normal"
 )
 parser.add_argument(
-    "--climate", dest="climate", choices=["elev", "paleo", "present"], help="Climate", default="present"
+    "--climate",
+    dest="climate",
+    choices=["elev", "paleo", "present", "calib", "constant"],
+    help="Climate",
+    default="constant",
 )
 parser.add_argument(
     "-d",
@@ -60,7 +64,7 @@ parser.add_argument(
     default="olympics",
 )
 parser.add_argument("--start_year", dest="start", type=float, help="Start year", default=0)
-parser.add_argument("--duration", dest="duration", type=float, help="Duration", default=10)
+parser.add_argument("--duration", dest="duration", type=float, help="Duration", default=1000)
 parser.add_argument("--exstep", dest="exstep", type=float, help="Spatial time series writing interval", default=100)
 parser.add_argument(
     "-f",
@@ -94,7 +98,7 @@ parser.add_argument(
     dest="stress_balance",
     choices=["sia", "ssa+sia", "ssa"],
     help="stress balance solver",
-    default="sia",
+    default="ssa+sia",
 )
 parser.add_argument(
     "-e",
@@ -104,7 +108,7 @@ parser.add_argument(
     default="../uncertainty_quantification/constant_climate.csv",
 )
 parser.add_argument(
-    "--spatial_ts", dest="spatial_ts", choices=["basic", "standard", "none"], help="output size type", default="none",
+    "--spatial_ts", dest="spatial_ts", choices=["basic", "standard", "none"], help="output size type", default="basic",
 )
 
 
@@ -312,12 +316,13 @@ for n, combination in enumerate(combinations):
         climate_params_dict = generate_climate(
             climate,
             **{
-                "atmosphere_yearly_cycle_file": climate_file,
-                "atmosphere_lapse_rate_file": climate_file,
+                "atmosphere.yearly_cycle.file": climate_file,
+                "atmosphere.elevation_change.file": climate_file,
+                "atmosphere.elevation_change.temperature_lapse_rate": temperature_lapse_rate,
+                "precip_adjustement": "scale",
                 "atmosphere.precip_exponential_factor_for_temperature": precip_scale_factor,
-                "temp_lapse_rate": temperature_lapse_rate,
-                "atmosphere_delta_T_file": atmosphere_paleo_file,
-                "atmosphere_paleo_precip_file": atmosphere_paleo_file,
+                "atmosphere.delta_T.file": atmosphere_paleo_file,
+                "atmosphere.precip_scaling.file": atmosphere_paleo_file,
             }
         )
         # Setup Ocean Forcing

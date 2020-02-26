@@ -51,42 +51,6 @@ def generate_domain(domain):
     return pism_exec
 
 
-def default_spatial_ts_vars():
-    """
-    Returns a list of commonly-used extra vars
-    """
-
-    exvars = [
-        "amount_fluxes",
-        "air_temp_snapshot",
-        "beta",
-        "bmelt",
-        "dHdt",
-        "diffusivity",
-        "effective_air_temp",
-        "effective_precipitation",
-        "ice_mass",
-        "ice_surface_temp",
-        "mask",
-        "lat",
-        "lon",
-        "sftgif",
-        "mass_fluxes",
-        "pdd_rates",
-        "taub_mag",
-        "tauc",
-        "taud_mag",
-        "tempsurf",
-        "thk",
-        "topg",
-        "usurf",
-        "velbase_mag",
-        "velsurf_mag",
-    ]
-
-    return exvars
-
-
 def generate_spatial_ts(outfile, exvars, step, start=None, end=None, split=None, odir=None):
     """
     Return dict to generate spatial time series
@@ -360,52 +324,16 @@ def generate_climate(climate, **kwargs):
         params_dict["ice_surface_temp"] = "0,0,-100,5000"
         params_dict["climatic_mass_balance"] = "-3.,3,0,800,2500"
     elif climate in ("present"):
-        params_dict["atmosphere"] = "yearly_cycle,lapse_rate"
+        params_dict["atmosphere"] = "yearly_cycle,elevation_change"
         params_dict["surface.pdd.factor_ice"] = 4.59 / ice_density  # Shea et al (2009)
         params_dict["surface.pdd.factor_snow"] = 3.04 / ice_density  # Shea et al (2009)
         params_dict["surface.pdd.refreeze"] = 0
-        if "atmosphere_yearly_cycle_file" not in kwargs:
-            params_dict["atmosphere_yearly_cycle_file"] = "olympics_climate_1000m.nc"
-        else:
-            params_dict["atmosphere_yearly_cycle_file"] = kwargs["atmosphere_yearly_cycle_file"]
-        if "temp_lapse_rate" not in kwargs:
-            params_dict["temp_lapse_rate"] = 4.5
-        else:
-            params_dict["temp_lapse_rate"] = kwargs["temp_lapse_rate"]
-        if "atmosphere_lapse_rate_file" not in kwargs:
-            params_dict["atmosphere_lapse_rate_file"] = "olympics_climate_1000m.nc"
-        else:
-            params_dict["atmosphere_lapse_rate_file"] = kwargs["atmosphere_lapse_rate_file"]
         params_dict["surface"] = "pdd"
-    elif climate in ("paleo", "calib"):
-        params_dict["atmosphere"] = "yearly_cycle,lapse_rate,delta_T,paleo_precip"
+    elif climate in ("paleo", "calib", "constant"):
+        params_dict["atmosphere"] = "yearly_cycle,elevation_change,delta_T,precip_scaling"
         params_dict["surface.pdd.factor_ice"] = 4.59 / ice_density  # Shea et al (2009)
         params_dict["surface.pdd.factor_snow"] = 3.04 / ice_density  # Shea et al (2009)
         params_dict["surface.pdd.refreeze"] = 0
-        if "atmosphere_yearly_cycle_file" not in kwargs:
-            params_dict["atmosphere_yearly_cycle_file"] = "olympics_climate_1000m.nc"
-        else:
-            params_dict["atmosphere_yearly_cycle_file"] = kwargs["atmosphere_yearly_cycle_file"]
-        if "temp_lapse_rate" not in kwargs:
-            params_dict["temp_lapse_rate"] = 4.5
-        else:
-            params_dict["temp_lapse_rate"] = kwargs["temp_lapse_rate"]
-        if "atmosphere_lapse_rate_file" not in kwargs:
-            params_dict["atmosphere_lapse_rate_file"] = "olympics_climate_1000m.nc"
-        else:
-            params_dict["atmosphere_lapse_rate_file"] = kwargs["atmosphere_lapse_rate_file"]
-        if "atmosphere_delta_T_file" not in kwargs:
-            params_dict["atmosphere_delta_T_file"] = "paleo_modifier.nc"
-        else:
-            params_dict["atmosphere_delta_T_file"] = kwargs["atmosphere_delta_T_file"]
-        if "atmosphere_delta_T_file" not in kwargs:
-            params_dict["atmosphere_delta_T_file"] = "paleo_modifier.nc"
-        else:
-            params_dict["atmosphere_delta_T_file"] = kwargs["atmosphere_delta_T_file"]
-        if "atmosphere_paleo_precip_file" not in kwargs:
-            params_dict["atmosphere_paleo_precip_file"] = "paleo_modifier.nc"
-        else:
-            params_dict["atmosphere_paleo_precip_file"] = kwargs["atmosphere_paleo_precip_file"]
         params_dict["surface"] = "pdd"
     else:
         print("climate {} not recognized, exiting".format(climate))
@@ -435,6 +363,25 @@ def generate_ocean(ocean, **kwargs):
         sys.exit(0)
 
     return merge_dicts(params_dict, kwargs)
+
+
+spatial_ts_vars = {}
+
+
+spatial_ts_vars["basic"] = [
+    "beta",
+    "dHdt",
+    "diffusivity",
+    "ice_mass",
+    "mask",
+    "mass_fluxes",
+    "sftgif",
+    "thk",
+    "topg",
+    "usurf",
+    "velbase_mag",
+    "velsurf_mag",
+]
 
 
 def list_systems():
