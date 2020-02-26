@@ -73,6 +73,11 @@ parser.add_argument("--stress_balance", dest="stress_balance",
                     help="stress balance solver", default='ssa+sia')
 parser.add_argument("-p", "--params", dest="params_list",
                     help="Comma-separated list with params for sensitivity", default=None)
+parser.add_argument(
+    "--start_year", dest="start_year", type=int, help="Simulation start year", default=-12500
+)
+parser.add_argument(
+    "--duration", dest="duration", type=int, help="Years to simulate", default=125000)
 
 
 options = parser.parse_args()
@@ -95,8 +100,9 @@ climate = options.climate
 grid = options.grid
 stress_balance = options.stress_balance
 
-start = -125000
-end  = 0
+start = options.start_year
+end  = start + options.duration
+
 exstep = options.exstep
 domain = options.domain
 pism_exec = generate_domain(domain)
@@ -196,7 +202,7 @@ else:
 if do_sia_e:
     sia_e_values = [1.0, 3.0]
 else:
-    sia_e_values = [1.0]
+    sia_e_values = [3.0]
 if do_q:
     ppq_values = [0.33, 0.5]
 else:
@@ -210,7 +216,7 @@ if do_lapse:
 else:
     temp_lapse_rate_values = [6.0]
 
-bed_smoother_range = [0, 50, 250, 500, 1000]
+bed_smoother_range = [100, 500, 1000]
 combinations = list(itertools.product(bed_smoother_range, precip_scale_factor_values,
                                       sia_e_values,
                                       ppq_values,
