@@ -7,7 +7,9 @@ cd ../
 cd climate_forcing
 sh prepare_climate.sh
 cd ../../
-
+cd uncertainty_quantification
+python draw_constant_climate.py
+cd ../../
 cd glacial
 
 # get file; see page http://websrv.cs.umt.edu/isis/index.php/Present_Day_Greenland
