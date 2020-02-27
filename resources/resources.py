@@ -335,7 +335,8 @@ def generate_climate(climate, **kwargs):
         params_dict["surface.pdd.factor_snow"] = 3.04 / ice_density  # Shea et al (2009)
         params_dict["surface.pdd.refreeze"] = 0
         params_dict["surface"] = "pdd"
-    elif climate in ("orographic_preciptation"):
+    elif climate in ("constant_orographic"):
+        params_dict["atmosphere"] = "orographic_precipitation"
         params_dict["atmosphere.orographic_precipitation.background_precip_post"] = 0.057
         params_dict["atmosphere.orographic_precipitation.background_precip_pre"] = 1.0
         params_dict["atmosphere.orographic_precipitation.conversion_time"] = 1750.0
@@ -394,6 +395,7 @@ spatial_ts_vars["basic"] = [
     "beta",
     "dHdt",
     "diffusivity",
+    "effective_precipitation",
     "ice_mass",
     "mask",
     "mass_fluxes",

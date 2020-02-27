@@ -51,7 +51,7 @@ parser.add_argument(
 parser.add_argument(
     "--climate",
     dest="climate",
-    choices=["elev", "paleo", "present", "calib", "constant"],
+    choices=["elev", "paleo", "present", "calib", "constant", "constant_orographic"],
     help="Climate",
     default="constant",
 )
