@@ -2,16 +2,8 @@ netcdf pism_overrides {
     variables:
     byte pism_overrides;
 
-    pism_overrides:output.runtime.volume_scale_factor_log10_type = "integer";
-    pism_overrides:output.runtime.volume_scale_factor_log10_option = "summary_vol_scale_factor_log10";
-    pism_overrides:output.runtime.volume_scale_factor_log10_units = "pure number";
+    pism_overrides:stress_balance.sia.max_diffusivity = 100000.0;
     pism_overrides:output.runtime.volume_scale_factor_log10 = 2;
-    pism_overrides:output.runtime.volume_scale_factor_log10_doc = "an integer; log base 10 of scale factor to use for volume (in km^3) in summary line to stdout";
-
-    pism_overrides:output.runtime.area_scale_factor_log10_type = "integer";
-    pism_overrides:output.runtime.area_scale_factor_log10_option = "summary_area_scale_factor_log10";
-    pism_overrides:output.runtime.area_scale_factor_log10_units = "pure number";
     pism_overrides:output.runtime.area_scale_factor_log10 = 2;
-    pism_overrides:output.runtime.area_scale_factor_log10_doc = "an integer; log base 10 of scale factor to use for area (in km^2) in summary line to stdout";
 
 }
