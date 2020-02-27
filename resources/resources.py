@@ -335,6 +335,25 @@ def generate_climate(climate, **kwargs):
         params_dict["surface.pdd.factor_snow"] = 3.04 / ice_density  # Shea et al (2009)
         params_dict["surface.pdd.refreeze"] = 0
         params_dict["surface"] = "pdd"
+    elif climate in ("orographic_preciptation"):
+        params_dict["atmosphere.orographic_precipitation.background_precip_post"] = 0.057
+        params_dict["atmosphere.orographic_precipitation.background_precip_pre"] = 1.0
+        params_dict["atmosphere.orographic_precipitation.conversion_time"] = 1750.0
+        params_dict["atmosphere.orographic_precipitation.coriolis_latitude"] = 0.0
+        params_dict["atmosphere.orographic_precipitation.fallout_time"] = 1750.0
+        params_dict["atmosphere.orographic_precipitation.lapse_rate"] = -5.8
+        params_dict["atmosphere.orographic_precipitation.moist_adiabatic_lapse_rate"] = -6.5
+        params_dict["atmosphere.orographic_precipitation.moist_stability_frequency"] = 0.007
+        params_dict["atmosphere.orographic_precipitation.reference_density"] = 7.4e-3
+        params_dict["atmosphere.orographic_precipitation.scale_factor"] = 0.125
+        params_dict["atmosphere.orographic_precipitation.truncate"] = "true"
+        params_dict["atmosphere.orographic_precipitation.water_vapor_scale_height"] = 2600.0
+        params_dict["atmosphere.orographic_precipitation.wind_direction"] = 220
+        params_dict["atmosphere.orographic_precipitation.wind_speed"] = 15
+        params_dict["surface.pdd.factor_ice"] = 4.59 / ice_density  # Shea et al (2009)
+        params_dict["surface.pdd.factor_snow"] = 3.04 / ice_density  # Shea et al (2009)
+        params_dict["surface.pdd.refreeze"] = 0
+        params_dict["surface"] = "pdd"
     else:
         print("climate {} not recognized, exiting".format(climate))
         import sys
@@ -342,6 +361,9 @@ def generate_climate(climate, **kwargs):
         sys.exit(0)
 
     return merge_dicts(params_dict, kwargs)
+
+
+# ../../scripts/linear_orog_precip.py -i ../bed_dem/pism_Olympics_${GRID}m_v1.nc --background_precip_pre 1 --background_precip_post 0.057 --precip_scale_factor 0.125 --tau_c 1750 --tau_f 1750 --wind_direction $dir --wind_magnitude 15 --moist_stability 0.007 --vapor_scale_height 2600
 
 
 def generate_ocean(ocean, **kwargs):

@@ -305,7 +305,7 @@ for n, combination in enumerate(combinations):
         sb_params_dict["till_effective_fraction_overburden"] = tefo
         sb_params_dict["topg_to_phi"] = ttphi
         sb_params_dict["ssa_method"] = "fd"
-        sb_params_dict["stress_balance.sia.bed_smoother_range"] = bed_smoother_range
+        sb_params_dict["stress_balance.sia.bed_smoother.range"] = bed_smoother_range
 
         stress_balance_params_dict = generate_stress_balance(stress_balance, sb_params_dict)
 
