@@ -252,9 +252,9 @@ for n, combination in enumerate(combinations):
 
     atmosphere_paleo_file = "paleo_modifier_{}K.nc".format(temperature_offset)
 
-    script = "cc_{}_g{}m_{}.sh".format(domain.lower(), grid, experiment)
+    script = join(scripts_dir, "cc_{}_g{}m_{}.sh".format(domain.lower(), grid, experiment))
     scripts.append(script)
-    script_post = "cc_{}_g{}m_{}_post.sh".format(domain.lower(), grid, experiment)
+    script_post = join(scripts_dir, "cc_{}_g{}m_{}_post.sh".format(domain.lower(), grid, experiment))
     scripts_post.append(script_post)
 
     for filename in script:
