@@ -286,7 +286,7 @@ for n, combination in enumerate(combinations):
         general_params_dict["ys"] = start
         general_params_dict["ye"] = end
         general_params_dict["o"] = join(dirs["state"], outfile)
-
+        general_params_dict["mat_dt"] = 1
         general_params_dict["o_format"] = oformat
         general_params_dict["o_size"] = osize
         general_params_dict["config_override"] = pism_config_nc
