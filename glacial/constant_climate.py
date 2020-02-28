@@ -240,7 +240,6 @@ for n, combination in enumerate(combinations):
         phi_max,
         topg_min,
         topg_max,
-        bed_smoother_range,
     ) = combination
 
     ttphi = "{},{},{},{}".format(phi_min, phi_max, topg_min, topg_max)
@@ -305,7 +304,7 @@ for n, combination in enumerate(combinations):
         sb_params_dict["till_effective_fraction_overburden"] = tefo
         sb_params_dict["topg_to_phi"] = ttphi
         sb_params_dict["ssa_method"] = "fd"
-        sb_params_dict["stress_balance.sia.bed_smoother.range"] = bed_smoother_range
+        sb_params_dict["stress_balance.sia.bed_smoother.range"] = grid
 
         stress_balance_params_dict = generate_stress_balance(stress_balance, sb_params_dict)
 

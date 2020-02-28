@@ -14,7 +14,6 @@ phi_max = [45]
 topg_min = [5000]
 topg_max = [8000]
 temperature_lapse_rate = [5.0, 6.5]
-bed_smoother_range = [500]
 
 
 combinations = list(
@@ -29,7 +28,6 @@ combinations = list(
         phi_max,
         topg_min,
         topg_max,
-        bed_smoother_range,
     )
 )
 
@@ -44,7 +42,6 @@ keys = [
     "phi_max",
     "topg_min",
     "topg_max",
-    "bed_smoother_range",
 ]
 
 # Convert to Pandas dataframe, append column headers, output as csv
