@@ -309,7 +309,7 @@ for n, combination in enumerate(combinations):
         stress_balance_params_dict = generate_stress_balance(stress_balance, sb_params_dict)
 
         # Setup Climate Forcing
-        climate_file = "../data_sets/climate_forcing/ltop_climate_olympics_{grid}m_dir_{dir}_kg_m-2_yr-1.nc".format(
+        climate_file = "../data_sets/climate_forcing/pism_ltop_climate_olympics_{grid}m_dir_{dir}_kg_m-2_yr-1.nc".format(
             grid=grid, dir=wind_direction
         )
         climate_params_dict = generate_climate(
