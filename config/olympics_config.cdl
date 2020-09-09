@@ -5,5 +5,5 @@ netcdf pism_overrides {
     pism_overrides:stress_balance.sia.max_diffusivity = 100000.0;
     pism_overrides:output.runtime.volume_scale_factor_log10 = 2;
     pism_overrides:output.runtime.area_scale_factor_log10 = 2;
-
+    pism_overrides:geometry.ice_free_thickness_standard = 10.0;
 }
